@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Admin · Diagnóstico IPRESS</title>
+<style>
+  :root{
+    --azul-inst: #0B3D5C;
+    --azul-claro: #1B6E93;
+    --verde-ok: #1E7A46;
+    --amarillo-proc: #B8860B;
+    --rojo-crit: #A32424;
+    --fondo: #F4F7F8;
+    --panel: #FFFFFF;
+    --texto: #1D2A32;
+    --gris: #6B7A82;
+    --borde: #DCE4E7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Segoe UI', Arial, sans-serif; background:var(--fondo); color:var(--texto);}
+  .wrap{max-width:1100px; margin:0 auto; padding:28px 20px 60px;}
+  .header{
+    background:var(--azul-inst); color:#fff; padding:22px 26px; border-radius:10px;
+    margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+  }
+  .header h1{margin:0 0 4px; font-size:20px; font-weight:600;}
+  .header p{margin:0; font-size:12.5px; opacity:.8;}
+  .btn{
+    background:var(--azul-claro); color:#fff; border:none; padding:9px 16px; border-radius:6px;
+    font-size:13px; cursor:pointer; font-weight:600;
+  }
+  .btn:hover{background:#155a78;}
+  .btn-danger{background:var(--rojo-crit);}
+  .btn-danger:hover{background:#821c1c;}
+  .toolbar{
+    display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;
+  }
+  .toolbar input{
+    flex:1; min-width:200px; padding:9px 12px; border:1px solid var(--borde); border-radius:6px; font-size:13.5px;
+  }
+  .panel{background:var(--panel); border:1px solid var(--borde); border-radius:10px; overflow:hidden;}
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  thead th{
+    background:#EEF3F5; color:var(--azul-inst); text-align:left; padding:10px 12px;
+    font-size:11px; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(--borde);
+    position:sticky; top:0;
+  }
+  tbody td{padding:9px 12px; border-bottom:1px solid #f0f0f0;}
+  tbody tr:hover{background:#fafcfd;}
+  .badge{
+    padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; color:#fff; display:inline-block;
+  }
+  .badge-optimo{background:var(--verde-ok);}
+  .badge-proceso{background:var(--amarillo-proc);}
+  .badge-critico{background:var(--rojo-crit);}
+  .badge-na{background:var(--gris);}
+  .estado-msg{
+    text-align:center; padding:40px 20px; color:var(--gris); font-size:13.5px;
+  }
+  .count{font-size:12.5px; color:var(--gris); margin-bottom:10px;}
+  .config-box{
+    background:#FFF7E6; border:1px solid #F0D9A0; border-radius:8px; padding:14px 16px;
+    font-size:12.5px; margin-bottom:16px; display:none;
+  }
+  .config-box.show{display:block;}
+  .config-box strong{color:#8a6200;}
+  .table-scroll{overflow-x:auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <h1>Panel de Administración</h1>
+      <p>Diagnóstico de Interoperabilidad IPRESS — SETI-SIS</p>
+    </div>
+    <button class="btn" onclick="cargarRegistros()">🔄 Actualizar</button>
+  </div>
+
+  <div class="config-box" id="configBox">
+    ⚠️ <strong>Falta configurar la URL del Apps Script.</strong> Edita la constante <code>API_URL</code> al inicio del
+    <code>&lt;script&gt;</code> de este archivo con la URL de tu implementación de Google Apps Script (Code.gs).
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="filtro" placeholder="Buscar por RENIPRESS, nombre o región..." oninput="filtrar()">
+  </div>
+
+  <div class="count" id="conteo"></div>
+
+  <div class="panel">
+    <div class="table-scroll">
+      <table id="tablaRegistros">
+        <thead>
+          <tr>
+            <th>RENIPRESS</th>
+            <th>IPRESS</th>
+            <th>Región</th>
+            <th>Categoría</th>
+            <th>% Interop.</th>
+            <th>Status</th>
+            <th>Fecha registro</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="8" class="estado-msg">Cargando registros...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ⚠️ Reemplaza esta URL por la de tu implementación de Apps Script (ver Code.gs)
+const API_URL = "https://script.google.com/macros/s/AKfycbzR_8YEmzVde4_4yOVXJAYMwVa_oWlWOyJLcikDsE1qGaKdSW5SnLhvaQekwjAek1KA/exec";
+
+let registros = [];
+
+function badgeStatus(status){
+  const s = (status || "").toLowerCase();
+  if(s === "optimo" || s === "óptimo") return '<span class="badge badge-optimo">Óptimo</span>';
+  if(s === "en proceso") return '<span class="badge badge-proceso">En proceso</span>';
+  if(s === "critico" || s === "crítico") return '<span class="badge badge-critico">Crítico</span>';
+  return '<span class="badge badge-na">S/D</span>';
+}
+
+async function cargarRegistros(){
+  const tbody = document.getElementById('tbody');
+  if(API_URL.includes("PEGA_AQUI")){
+    document.getElementById('configBox').classList.add('show');
+    tbody.innerHTML = '<tr><td colspan="8" class="estado-msg">Configura la URL del Apps Script para ver los registros.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="8" class="estado-msg">Cargando registros...</td></tr>';
+  try{
+    const res = await fetch(API_URL + "?action=list");
+    const data = await res.json();
+    registros = data.records || [];
+    render(registros);
+  } catch(err){
+    tbody.innerHTML = '<tr><td colspan="8" class="estado-msg">Error al cargar: ' + err + '</td></tr>';
+  }
+}
+
+function render(lista){
+  const tbody = document.getElementById('tbody');
+  document.getElementById('conteo').textContent = lista.length + ' registro(s) encontrado(s)';
+  if(lista.length === 0){
+    tbody.innerHTML = '<tr><td colspan="8" class="estado-msg">Sin registros por el momento.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(r => `
+    <tr>
+      <td>${r.RENIPRESS || ''}</td>
+      <td>${r.IPRESS || ''}</td>
+      <td>${r.REGION || ''}</td>
+      <td>${r.CATEGORIA || ''}</td>
+      <td>${r.PCT_INTEROPERABILIDAD ? (Number(r.PCT_INTEROPERABILIDAD)*100).toFixed(0)+'%' : 's/d'}</td>
+      <td>${badgeStatus(r.STATUS_FINAL)}</td>
+      <td>${r.FECHA_REGISTRO || ''}</td>
+      <td><button class="btn btn-danger" onclick="eliminarRegistro('${r.RENIPRESS}')">Eliminar</button></td>
+    </tr>
+  `).join('');
+}
+
+function filtrar(){
+  const q = document.getElementById('filtro').value.trim().toLowerCase();
+  if(!q){ render(registros); return; }
+  const filtrados = registros.filter(r =>
+    (r.RENIPRESS || '').toLowerCase().includes(q) ||
+    (r.IPRESS || '').toLowerCase().includes(q) ||
+    (r.REGION || '').toLowerCase().includes(q)
+  );
+  render(filtrados);
+}
+
+async function eliminarRegistro(renipress){
+  if(!confirm('¿Eliminar el registro de la IPRESS ' + renipress + '? Esta acción no se puede deshacer.')) return;
+  try{
+    const res = await fetch(API_URL + "?action=delete&renipress=" + encodeURIComponent(renipress));
+    const data = await res.json();
+    if(data.status === 'ok'){
+      cargarRegistros();
+    } else {
+      alert('No se pudo eliminar: ' + (data.message || 'error desconocido'));
+    }
+  } catch(err){
+    alert('Error al eliminar: ' + err);
+  }
+}
+
+cargarRegistros();
+</script>
+</body>
+</html>
