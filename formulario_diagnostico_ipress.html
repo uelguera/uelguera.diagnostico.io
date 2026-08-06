@@ -145,6 +145,8 @@
     </div>
     <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión)</span></label>
     <input type="number" id="consOperativa" min="0" value="0">
+    <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener 2-3 funcionales)</span></label>
+    <input type="number" id="consFuncionales" min="0" value="0">
     <label>Lectoras de DNI electrónico</label>
     <div class="row">
       <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0"></div>
@@ -190,30 +192,30 @@
 
     <div class="conditional" id="condSGHsi">
       <label class="hint">Nombre del sistema</label>
-      <select id="nombreSistema">
+      <select id="nombreSistema" onchange="toggle('condOtroSistema', this.value==='Otro')">
         <option value="">Seleccione...</option>
-        <option>Pakamuros</option><option>HOSIX</option><option>Web Galen</option><option>Otro</option>
+        <option>Pakamuros Soft</option><option>SisGalen</option><option>Hosix</option>
+        <option>SIHCE MINSA</option><option>One Vision</option><option>WebGalen</option>
+        <option>KSALUD</option><option value="Otro">Otro</option>
       </select>
-      <div class="row">
-        <div><label class="hint">N° total de servicios de la IPRESS</label><input type="number" id="serviciosTotales" min="0" value="0"></div>
-        <div><label class="hint">N° de servicios con el sistema desplegado y en uso</label><input type="number" id="serviciosDesplegados" min="0" value="0"></div>
+      <div class="conditional show" id="condOtroSistema" style="display:none;">
+        <label class="hint">Especifique el sistema</label>
+        <input type="text" id="otroSistemaTexto">
       </div>
-      <label class="hint">Servicios desplegados actualmente</label>
+      <label class="hint">Servicios desplegados actualmente (usa el sistema)</label>
       <div class="radio-group">
-        <label><input type="checkbox" id="svcCE"> Consulta externa</label>
-        <label><input type="checkbox" id="svcHosp"> Hospitalización</label>
-        <label><input type="checkbox" id="svcEmerg"> Emergencia</label>
-        <label><input type="checkbox" id="svcFarm"> Farmacia</label>
-        <label><input type="checkbox" id="svcLab"> Laboratorio</label>
+        <label><input type="checkbox" id="svcConsultaExterna"> Consulta externa</label>
+        <label><input type="checkbox" id="svcHospitalizacion"> Hospitalización</label>
+        <label><input type="checkbox" id="svcEmergencia"> Emergencia</label>
+        <label><input type="checkbox" id="svcFarmacia"> Farmacia</label>
+        <label><input type="checkbox" id="svcLaboratorio"> Laboratorio</label>
+        <label><input type="checkbox" id="svcImagenes"> Diagnóstico por Imágenes</label>
+        <label><input type="checkbox" id="svcObstetrico"> Centro Obstétrico</label>
+        <label><input type="checkbox" id="svcQuirurgico"> Centro Quirúrgico</label>
+        <label><input type="checkbox" id="svcUci"> UCI/UCIN</label>
       </div>
-      <div class="row">
-        <div><label class="hint">N° consultorios/servicios conectados al sistema</label><input type="number" id="consConectados" min="0" value="0"></div>
-        <div><label class="hint">¿Envía datos a SETI-SIS?</label>
-          <select id="enviaSetisis"><option value="">Seleccione...</option><option>Sí</option><option>No</option></select>
-        </div>
-      </div>
-      <label class="hint">Servicio específico enviado a SETI-SIS</label>
-      <input type="text" id="servicioEnviado">
+      <label class="hint">¿La IPRESS envía FUA a través de SETI-SIS?</label>
+      <select id="enviaSetisis"><option value="">Seleccione...</option><option>Sí</option><option>No</option></select>
     </div>
 
     <div class="conditional" id="condSGHno">
@@ -230,7 +232,12 @@
       <div class="conditional" id="condPlanea">
         <div class="row">
           <div><label class="hint">Sistema propuesto</label>
-            <select id="sistemaPropuesto"><option value="">Seleccione...</option><option>Web Galen</option><option>Pakamuros</option><option>Otro</option></select>
+            <select id="sistemaPropuesto">
+              <option value="">Seleccione...</option>
+              <option>Pakamuros Soft</option><option>SisGalen</option><option>Hosix</option>
+              <option>SIHCE MINSA</option><option>One Vision</option><option>WebGalen</option>
+              <option>KSALUD</option><option>Otro</option>
+            </select>
           </div>
           <div><label class="hint">Fecha planificada de implementación</label><input type="date" id="fechaImplementacion"></div>
         </div>
@@ -302,10 +309,8 @@
   <div class="section">
     <h2><span class="num">7</span>Recurso humano y planificación</h2>
     <div class="row">
-      <div><label>N° personal de TI asignado</label><input type="number" id="personalTI" min="0" value="0"></div>
-      <div><label>Condición</label>
-        <select id="condicionTI"><option value="">Seleccione...</option><option>Permanente</option><option>Visitas periódicas</option><option>Ninguno</option></select>
-      </div>
+      <div><label>N° personal TI Nombrado/Contratado</label><input type="number" id="personalTiNombrado" min="0" value="0"></div>
+      <div><label>N° personal TI Locador de servicios</label><input type="number" id="personalTiLocador" min="0" value="0"></div>
     </div>
     <div class="row">
       <div><label>N° total de profesionales de la salud de la IPRESS</label><input type="number" id="profesionalesTotal" min="0" value="0"></div>
@@ -316,34 +321,36 @@
       <option value="">Seleccione...</option>
       <option>Sí, completa</option><option>Parcial</option><option>No</option>
     </select>
-    <label>¿Cuenta con proyecto/presupuesto asignado para cerrar brechas?</label>
-    <select id="proyecto">
-      <option value="">Seleccione...</option>
-      <option>Sí, con presupuesto aprobado</option><option>En gestión</option><option>No</option>
-    </select>
-    <label>Responsable del registro</label>
-    <input type="text" id="responsable" placeholder="Nombre de quien completa este diagnóstico">
+
+    <label style="margin-top:18px; border-top:1px solid var(--borde); padding-top:14px;">Director(a) de la IPRESS</label>
+    <div class="row">
+      <div><input type="text" id="directorNombre" placeholder="Nombre completo"></div>
+      <div><input type="text" id="directorCelular" placeholder="Celular"></div>
+      <div><input type="text" id="directorCorreo" placeholder="Correo"></div>
+    </div>
+
+    <label>Jefe(a) de la Unidad de Seguros</label>
+    <div class="row">
+      <div><input type="text" id="jefeSegurosNombre" placeholder="Nombre completo"></div>
+      <div><input type="text" id="jefeSegurosCelular" placeholder="Celular"></div>
+      <div><input type="text" id="jefeSegurosCorreo" placeholder="Correo"></div>
+    </div>
+
+    <label>Jefe(a) de Estadística e Informática / Responsable TI</label>
+    <div class="row">
+      <div><input type="text" id="jefeTiNombre" placeholder="Nombre completo"></div>
+      <div><input type="text" id="jefeTiCelular" placeholder="Celular"></div>
+      <div><input type="text" id="jefeTiCorreo" placeholder="Correo"></div>
+    </div>
+
+    <label style="margin-top:18px; border-top:1px solid var(--borde); padding-top:14px;">Responsable del registro <span style="color:var(--rojo-crit);">*</span></label>
+    <input type="text" id="responsable" placeholder="Nombre de quien completa este diagnóstico" required>
   </div>
 
-  <div class="row" style="gap:10px;">
-    <button class="btn-calc" onclick="calcularStatus()">Calcular status de la IPRESS</button>
-  </div>
-  <button class="btn-calc" id="btnGuardar" style="background:var(--verde-ok); margin-top:10px;" onclick="guardarRegistro()">💾 Guardar registro</button>
+  <button class="btn-calc" id="btnGuardar" style="background:var(--verde-ok);" onclick="guardarRegistro()">💾 Guardar registro</button>
   <div id="msgGuardado" style="text-align:center; font-size:12.5px; margin-top:8px; color:var(--gris);"></div>
 
-  <div class="resultado" id="resultado">
-    <div class="eyebrow" style="font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.8;">Resultado del diagnóstico</div>
-    <h3 id="statusTitulo"></h3>
-    <div class="score" id="statusScore"></div>
-    <div class="barra-dim" id="dimEquip"></div>
-    <div class="barra-dim" id="dimConect"></div>
-    <div class="barra-dim" id="dimSistema"></div>
-    <div class="barra-dim" id="dimRRHH"></div>
-    <div class="barra-dim" id="dimPlan"></div>
-    <div class="detalle" id="statusDetalle"></div>
-  </div>
-
-  <div class="footer-note">Ponderación: Equipamiento 25% · Conectividad 20% · Sistema + Interoperabilidad 25% · Recurso humano 15% · Planificación 15%</div>
+  <div class="footer-note">La evaluación de brechas y el status (Óptimo/En proceso/Crítico) se revisan desde el panel de administración.</div>
 </div>
 
 <script>
@@ -413,6 +420,7 @@ function recopilarDatos(){
   const consTotal = parseFloat(document.getElementById('consTotal').value) || 0;
   const consEquip = parseFloat(document.getElementById('consEquip').value) || 0;
   const consOperativa = parseFloat(document.getElementById('consOperativa').value) || 0;
+  const consFuncionales = parseFloat(document.getElementById('consFuncionales').value) || 0;
   const lectorasInst = parseFloat(document.getElementById('lectorasInst').value) || 0;
   const lectorasReq = parseFloat(document.getElementById('lectorasReq').value) || 0;
   const cableadoBueno = parseFloat(document.getElementById('cableadoBueno').value) || 0;
@@ -423,9 +431,20 @@ function recopilarDatos(){
   const capacidadServidor = document.getElementById('capacidadServidor').value;
 
   const sgh = document.querySelector('input[name=sgh]:checked')?.value || '';
-  const serviciosTotales = parseFloat(document.getElementById('serviciosTotales').value) || 0;
-  const serviciosDesplegados = parseFloat(document.getElementById('serviciosDesplegados').value) || 0;
-  const enviaSetisis = document.getElementById('enviaSetisis').value;
+  const nombreSistemaSel = document.getElementById('nombreSistema').value;
+  const nombreSistema = nombreSistemaSel === 'Otro' ? document.getElementById('otroSistemaTexto').value : nombreSistemaSel;
+
+  const servicios = {
+    SVC_CONSULTA_EXTERNA: document.getElementById('svcConsultaExterna').checked ? 'Si' : 'No',
+    SVC_HOSPITALIZACION: document.getElementById('svcHospitalizacion').checked ? 'Si' : 'No',
+    SVC_EMERGENCIA: document.getElementById('svcEmergencia').checked ? 'Si' : 'No',
+    SVC_FARMACIA: document.getElementById('svcFarmacia').checked ? 'Si' : 'No',
+    SVC_LABORATORIO: document.getElementById('svcLaboratorio').checked ? 'Si' : 'No',
+    SVC_DIAGNOSTICO_IMAGENES: document.getElementById('svcImagenes').checked ? 'Si' : 'No',
+    SVC_CENTRO_OBSTETRICO: document.getElementById('svcObstetrico').checked ? 'Si' : 'No',
+    SVC_CENTRO_QUIRURGICO: document.getElementById('svcQuirurgico').checked ? 'Si' : 'No',
+    SVC_UCI_UCIN: document.getElementById('svcUci').checked ? 'Si' : 'No',
+  };
 
   const ws = {
     WS_REFCON: document.getElementById('wsRefcon').value,
@@ -435,18 +454,16 @@ function recopilarDatos(){
     WS_SISMED: document.getElementById('wsSismed').value,
     WS_HIS: document.getElementById('wsHis').value,
   };
-  const wsAutomaticas = Object.values(ws).filter(v => v === 'Automática').length;
 
   const tieneInternet = document.getElementById('tieneInternet').value;
   const estabilidad = document.getElementById('estabilidad').value;
   const ups = document.querySelector('input[name=ups]:checked')?.value || '';
 
-  const personalTI = parseFloat(document.getElementById('personalTI').value) || 0;
-  const condicionTI = document.getElementById('condicionTI').value;
+  const personalTiNombrado = parseFloat(document.getElementById('personalTiNombrado').value) || 0;
+  const personalTiLocador = parseFloat(document.getElementById('personalTiLocador').value) || 0;
   const profesionalesTotal = parseFloat(document.getElementById('profesionalesTotal').value) || 0;
   const profesionalesDnie = parseFloat(document.getElementById('profesionalesDnie').value) || 0;
   const capacitacion = document.getElementById('capacitacion').value;
-  const proyecto = document.getElementById('proyecto').value;
 
   return {
     // Identificación
@@ -461,112 +478,59 @@ function recopilarDatos(){
     RED_MICRORRED: document.getElementById('red').value,
     // Equipamiento
     CONSULTORIOS_TOTALES: consTotal, CONSULTORIOS_EQUIPADOS: consEquip, CONSULTORIOS_PC_OPERATIVA: consOperativa,
+    CONSULTORIOS_FUNCIONALES: consFuncionales,
     LECTORAS_INSTALADAS: lectorasInst, LECTORAS_REQUERIDAS: lectorasReq,
-    CONSULTORIOS_CABLEADO_BUEN_ESTADO: cableadoBueno,
+    CONSULTORIOS_CABLEADO_BUEN_ESTADO: cableadoBueno, CONSULTORIOS_CABLEADO_DEFICIENTE: cableadoDeficiente,
     // Servidor
     TIENE_SERVIDOR: servidor === 'si' ? 'Si' : (servidor === 'no' ? 'No' : ''),
     TIPO_SERVIDOR: tipoServidor, CAPACIDAD_DISPONIBLE: capacidadServidor,
     // SGH
     TIENE_SGH: sgh === 'si' ? 'Si' : (sgh === 'no' ? 'No' : ''),
-    NOMBRE_SISTEMA: document.getElementById('nombreSistema').value,
-    SERVICIOS_TOTALES_IPRESS: serviciosTotales, SERVICIOS_DESPLEGADOS_SGH: serviciosDesplegados,
+    NOMBRE_SISTEMA: nombreSistema,
+    ...servicios,
+    ENVIA_SETISIS: document.getElementById('enviaSetisis').value,
     SITUACION_SIN_SGH: document.getElementById('situacionActual').value,
+    SISTEMA_PROPUESTO: document.getElementById('sistemaPropuesto').value,
+    FECHA_IMPLEMENTACION_PLANIFICADA: document.getElementById('fechaImplementacion').value,
     FECHA_PRIMER_ENVIO_SETISIS: document.getElementById('fechaPrimerEnvio').value,
     // Interoperabilidad
     ...ws,
     // Conectividad
     TIENE_INTERNET: tieneInternet, ESTABILIDAD: estabilidad, UPS: ups,
+    VELOCIDAD_INTERNET: document.getElementById('velocidadInternet').value,
     // RRHH
-    PERSONAL_TI_CANTIDAD: personalTI, PERSONAL_TI_CONDICION: condicionTI,
+    PERSONAL_TI_NOMBRADO: personalTiNombrado, PERSONAL_TI_LOCADOR: personalTiLocador,
     PROFESIONALES_SALUD_TOTAL: profesionalesTotal, PROFESIONALES_CON_DNIE: profesionalesDnie,
     CAPACITACION_PERSONAL: capacitacion,
-    // Planificación
-    PROYECTO_PRESUPUESTO: proyecto,
+    // Autoridades
+    DIRECTOR_NOMBRE: document.getElementById('directorNombre').value,
+    DIRECTOR_CELULAR: document.getElementById('directorCelular').value,
+    DIRECTOR_CORREO: document.getElementById('directorCorreo').value,
+    JEFE_SEGUROS_NOMBRE: document.getElementById('jefeSegurosNombre').value,
+    JEFE_SEGUROS_CELULAR: document.getElementById('jefeSegurosCelular').value,
+    JEFE_SEGUROS_CORREO: document.getElementById('jefeSegurosCorreo').value,
+    JEFE_TI_NOMBRE: document.getElementById('jefeTiNombre').value,
+    JEFE_TI_CELULAR: document.getElementById('jefeTiCelular').value,
+    JEFE_TI_CORREO: document.getElementById('jefeTiCorreo').value,
     // Meta
     RESPONSABLE: document.getElementById('responsable').value,
-    // Derivados (para guardar ya calculados)
-    _wsAutomaticas: wsAutomaticas,
-  };
-}
-
-function calcularStatus(){
-  const d = recopilarDatos();
-
-  // --- Equipamiento (25%) ---
-  const pctPcReal = d.CONSULTORIOS_TOTALES > 0 ? d.CONSULTORIOS_PC_OPERATIVA / d.CONSULTORIOS_TOTALES : 0;
-  const pctLectoras = d.LECTORAS_REQUERIDAS > 0 ? d.LECTORAS_INSTALADAS / d.LECTORAS_REQUERIDAS : 0;
-  const pctCableado = d.CONSULTORIOS_TOTALES > 0 ? d.CONSULTORIOS_CABLEADO_BUEN_ESTADO / d.CONSULTORIOS_TOTALES : 0;
-  const scoreEquip = ((pctPcReal + pctLectoras + pctCableado) / 3) * 100;
-
-  // --- Conectividad (20%): internet + servidor con capacidad + UPS ---
-  let scoreConect = 0;
-  if(d.TIENE_INTERNET === 'Sí') scoreConect += 25;
-  if(d.ESTABILIDAD === 'Estable') scoreConect += 20;
-  else if(d.ESTABILIDAD === 'Intermitente') scoreConect += 10;
-  if(d.TIENE_SERVIDOR === 'Si') scoreConect += 20;
-  if(d.CAPACIDAD_DISPONIBLE === 'Si') scoreConect += 20;
-  if(d.UPS === 'si') scoreConect += 15;
-
-  // --- Sistema + Interoperabilidad (25%) ---
-  const pctDespliegue = d.SERVICIOS_TOTALES_IPRESS > 0 ? d.SERVICIOS_DESPLEGADOS_SGH / d.SERVICIOS_TOTALES_IPRESS : 0;
-  const pctInterop = d._wsAutomaticas / 6;
-  const scoreSistema = ((pctDespliegue + pctInterop) / 2) * 100;
-
-  // --- Recurso humano (15%) ---
-  const pctDnie = d.PROFESIONALES_SALUD_TOTAL > 0 ? d.PROFESIONALES_CON_DNIE / d.PROFESIONALES_SALUD_TOTAL : 0;
-  let scoreRRHH = pctDnie * 60;
-  if(d.CAPACITACION_PERSONAL === 'Sí, completa') scoreRRHH += 40;
-  else if(d.CAPACITACION_PERSONAL === 'Parcial') scoreRRHH += 20;
-
-  // --- Planificación (15%) ---
-  let scorePlan = 0;
-  if(d.PROYECTO_PRESUPUESTO === 'Sí, con presupuesto aprobado') scorePlan = 100;
-  else if(d.PROYECTO_PRESUPUESTO === 'En gestión') scorePlan = 50;
-
-  const total = scoreEquip*0.25 + scoreConect*0.20 + scoreSistema*0.25 + scoreRRHH*0.15 + scorePlan*0.15;
-
-  const res = document.getElementById('resultado');
-  res.classList.remove('status-optimo','status-proceso','status-critico');
-  let titulo, clase;
-  if(total >= 80){ titulo = 'Óptimo'; clase = 'status-optimo'; }
-  else if(total >= 50){ titulo = 'En proceso'; clase = 'status-proceso'; }
-  else { titulo = 'Crítico'; clase = 'status-critico'; }
-  res.classList.add(clase);
-  res.classList.add('show');
-
-  document.getElementById('statusTitulo').textContent = 'Status: ' + titulo;
-  document.getElementById('statusScore').textContent = total.toFixed(1) + ' / 100';
-  document.getElementById('dimEquip').innerHTML = '<span>Equipamiento</span><span>' + scoreEquip.toFixed(0) + '%</span>';
-  document.getElementById('dimConect').innerHTML = '<span>Conectividad/Infraestructura</span><span>' + scoreConect.toFixed(0) + '%</span>';
-  document.getElementById('dimSistema').innerHTML = '<span>Sistema + Interoperabilidad</span><span>' + scoreSistema.toFixed(0) + '%</span>';
-  document.getElementById('dimRRHH').innerHTML = '<span>Recurso humano</span><span>' + scoreRRHH.toFixed(0) + '%</span>';
-  document.getElementById('dimPlan').innerHTML = '<span>Planificación</span><span>' + scorePlan.toFixed(0) + '%</span>';
-
-  const brechaPcDura = d.CONSULTORIOS_TOTALES - d.CONSULTORIOS_EQUIPADOS;
-  const brechaPcFuncional = d.CONSULTORIOS_EQUIPADOS - d.CONSULTORIOS_PC_OPERATIVA;
-  const brechaLectoras = Math.max(d.LECTORAS_REQUERIDAS - d.LECTORAS_INSTALADAS, 0);
-  const brechaDnie = Math.max(d.PROFESIONALES_SALUD_TOTAL - d.PROFESIONALES_CON_DNIE, 0);
-  document.getElementById('statusDetalle').textContent =
-    `Brecha PC (sin equipar): ${brechaPcDura} · Brecha PC (no operativa): ${brechaPcFuncional} · ` +
-    `Brecha lectoras: ${brechaLectoras} · Brecha DNIe: ${brechaDnie} · ` +
-    `WS automáticas: ${d._wsAutomaticas}/6`;
-
-  res.scrollIntoView({behavior:'smooth', block:'nearest'});
-
-  // Guarda el cálculo para adjuntarlo al registro si se presiona "Guardar"
-  window._ultimoCalculo = {
-    SCORE_EQUIPAMIENTO: scoreEquip.toFixed(1), SCORE_CONECTIVIDAD: scoreConect.toFixed(1),
-    SCORE_SISTEMA: scoreSistema.toFixed(1), SCORE_RRHH: scoreRRHH.toFixed(1),
-    SCORE_PLANIFICACION: scorePlan.toFixed(1), SCORE_TOTAL: total.toFixed(1), STATUS_FINAL: titulo,
   };
 }
 
 async function guardarRegistro(){
   const msg = document.getElementById('msgGuardado');
   const renipress = document.getElementById('reniIpress').value;
+  const responsable = document.getElementById('responsable').value.trim();
+
   if(!renipress){
     msg.style.color = 'var(--rojo-crit)';
     msg.textContent = 'Selecciona primero una IPRESS en la sección 1 (Identificación).';
+    return;
+  }
+  if(!responsable){
+    msg.style.color = 'var(--rojo-crit)';
+    msg.textContent = 'El campo "Responsable del registro" (sección 7) es obligatorio.';
+    document.getElementById('responsable').focus();
     return;
   }
   if(API_URL.includes('PEGA_AQUI')){
@@ -574,10 +538,8 @@ async function guardarRegistro(){
     msg.textContent = 'Falta configurar la URL del Apps Script en la constante API_URL.';
     return;
   }
-  if(!window._ultimoCalculo) calcularStatus();
 
-  const payload = { ...recopilarDatos(), ...window._ultimoCalculo };
-  delete payload._wsAutomaticas;
+  const payload = recopilarDatos();
 
   const btn = document.getElementById('btnGuardar');
   btn.disabled = true;
@@ -592,7 +554,7 @@ async function guardarRegistro(){
     const data = await res.json();
     if(data.status === 'ok'){
       msg.style.color = 'var(--verde-ok)';
-      msg.textContent = '✓ Registro guardado correctamente.';
+      msg.textContent = '✓ Registro guardado correctamente. La evaluación se realiza desde el panel de administración.';
     } else {
       msg.style.color = 'var(--rojo-crit)';
       msg.textContent = 'Error al guardar: ' + (data.error || data.message || 'desconocido');
