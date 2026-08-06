@@ -596,20 +596,25 @@ function validarCoherencia(){
   const consTotal = parseFloat(document.getElementById('consTotal').value) || 0;
   const consEquip = parseFloat(document.getElementById('consEquip').value) || 0;
   const consOperativa = parseFloat(document.getElementById('consOperativa').value) || 0;
+  const consFuncionales = parseFloat(document.getElementById('consFuncionales').value) || 0;
   const cableadoBueno = parseFloat(document.getElementById('cableadoBueno').value) || 0;
+  const cableadoDeficiente = parseFloat(document.getElementById('cableadoDeficiente').value) || 0;
   const lectorasInst = parseFloat(document.getElementById('lectorasInst').value) || 0;
   const lectorasReq = parseFloat(document.getElementById('lectorasReq').value) || 0;
   const fechaImpl = document.getElementById('fechaImplementacion').value;
   const fechaEnvio = document.getElementById('fechaPrimerEnvio').value;
 
-  if(consEquip > consTotal){
-    return 'Los "consultorios equipados con PC" (' + consEquip + ') no pueden ser más que los "consultorios totales" (' + consTotal + ').';
+  if(!(consTotal > consEquip)){
+    return 'Los "consultorios totales" (' + consTotal + ') deben ser mayores que los "consultorios equipados con PC" (' + consEquip + ').';
   }
-  if(consOperativa > consEquip){
-    return 'Los "consultorios con PC operativa" (' + consOperativa + ') no pueden ser más que los "consultorios equipados" (' + consEquip + ').';
+  if(!(consEquip > consOperativa)){
+    return 'Los "consultorios equipados con PC" (' + consEquip + ') deben ser mayores que los "consultorios con PC operativa" (' + consOperativa + ').';
   }
-  if(cableadoBueno > consTotal){
-    return 'Los "consultorios con cableado en buen estado" (' + cableadoBueno + ') no pueden ser más que los "consultorios totales" (' + consTotal + ').';
+  if(!(consFuncionales > consTotal)){
+    return 'Los "consultorios funcionales" (' + consFuncionales + ') deben ser mayores que los "consultorios totales" (' + consTotal + ').';
+  }
+  if(cableadoBueno !== (consTotal - cableadoDeficiente)){
+    return 'Los "consultorios con cableado en buen estado" (' + cableadoBueno + ') deben ser igual a "consultorios totales" − "consultorios con cableado deficiente" (' + (consTotal - cableadoDeficiente) + ').';
   }
   if(lectorasInst > lectorasReq && lectorasReq > 0){
     return 'Las "lectoras instaladas" (' + lectorasInst + ') superan a las "lectoras requeridas" (' + lectorasReq + '). Verifica el dato.';
