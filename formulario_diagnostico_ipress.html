@@ -86,6 +86,13 @@
 
   .seccion-bloqueada{opacity:.45; pointer-events:none; user-select:none;}
 
+  .aviso-coherencia{
+    display:none; margin-top:12px; padding:10px 12px; border-radius:6px;
+    background:#FDECEC; border:1px solid #f0b8b8; color:var(--rojo-crit);
+    font-size:12.5px; line-height:1.5;
+  }
+  .aviso-coherencia.show{display:block;}
+
   .modal-overlay{
     display:none; position:fixed; inset:0; background:rgba(11,61,92,0.55);
     align-items:center; justify-content:center; z-index:100; padding:20px;
@@ -161,23 +168,24 @@
   <div class="section seccion-bloqueada" id="seccion2">
     <h2><span class="num">2</span>Equipamiento y consultorios</h2>
     <div class="row">
-      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente')"></div>
-      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa')"></div>
+      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); validarEnVivo()"></div>
+      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa'); validarEnVivo()"></div>
     </div>
     <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión — sugerido automáticamente, editable)</span></label>
-    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocado('consOperativa')">
+    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocado('consOperativa'); validarEnVivo()">
     <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener más de un consultorio funcional)</span></label>
-    <input type="number" id="consFuncionales" min="0" value="0">
+    <input type="number" id="consFuncionales" min="0" value="0" oninput="validarEnVivo()">
     <label>Lectoras de DNI electrónico</label>
     <div class="row">
-      <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq')"></div>
-      <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocado('lectorasReq')"></div>
+      <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); validarEnVivo()"></div>
+      <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocado('lectorasReq'); validarEnVivo()"></div>
     </div>
     <label>Cableado de red <span class="hint">(punto activo hasta el consultorio)</span></label>
     <div class="row">
-      <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0" oninput="sugerirResta('consTotal','cableadoBueno','cableadoDeficiente')"></div>
-      <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocado('cableadoDeficiente')"></div>
+      <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0" oninput="sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); validarEnVivo()"></div>
+      <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocado('cableadoDeficiente'); validarEnVivo()"></div>
     </div>
+    <div id="avisoCoherencia" class="aviso-coherencia"></div>
   </div>
 
   <!-- 3. SERVIDOR -->
@@ -569,6 +577,8 @@ function precargarDatos(r){
   setVal('jefeTiCorreo', r.JEFE_TI_CORREO);
 
   setVal('responsable', r.RESPONSABLE);
+
+  validarEnVivo();
 }
 
 document.addEventListener('click', function(e){
@@ -604,14 +614,14 @@ function validarCoherencia(){
   const fechaImpl = document.getElementById('fechaImplementacion').value;
   const fechaEnvio = document.getElementById('fechaPrimerEnvio').value;
 
-  if(!(consTotal > consEquip)){
-    return 'Los "consultorios totales" (' + consTotal + ') deben ser mayores que los "consultorios equipados con PC" (' + consEquip + ').';
+  if(!(consTotal >= consEquip)){
+    return 'Los "consultorios totales" (' + consTotal + ') deben ser mayores o iguales que los "consultorios equipados con PC" (' + consEquip + ').';
   }
-  if(!(consEquip > consOperativa)){
-    return 'Los "consultorios equipados con PC" (' + consEquip + ') deben ser mayores que los "consultorios con PC operativa" (' + consOperativa + ').';
+  if(!(consEquip >= consOperativa)){
+    return 'Los "consultorios equipados con PC" (' + consEquip + ') deben ser mayores o iguales que los "consultorios con PC operativa" (' + consOperativa + ').';
   }
-  if(!(consFuncionales > consTotal)){
-    return 'Los "consultorios funcionales" (' + consFuncionales + ') deben ser mayores que los "consultorios totales" (' + consTotal + ').';
+  if(!(consFuncionales >= consTotal)){
+    return 'Los "consultorios funcionales" (' + consFuncionales + ') deben ser mayores o iguales que los "consultorios totales" (' + consTotal + ').';
   }
   if(cableadoBueno !== (consTotal - cableadoDeficiente)){
     return 'Los "consultorios con cableado en buen estado" (' + cableadoBueno + ') deben ser igual a "consultorios totales" − "consultorios con cableado deficiente" (' + (consTotal - cableadoDeficiente) + ').';
@@ -623,6 +633,18 @@ function validarCoherencia(){
     return 'La "fecha de primer envío a SETI-SIS" no puede ser anterior a la "fecha de implementación planificada".';
   }
   return null;
+}
+
+function validarEnVivo(){
+  const aviso = document.getElementById('avisoCoherencia');
+  const mensaje = validarCoherencia();
+  if(mensaje){
+    aviso.textContent = '⚠ ' + mensaje;
+    aviso.classList.add('show');
+  } else {
+    aviso.classList.remove('show');
+    aviso.textContent = '';
+  }
 }
 
 function validarCorreos(){
