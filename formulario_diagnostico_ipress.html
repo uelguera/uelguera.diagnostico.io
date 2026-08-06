@@ -84,6 +84,27 @@
 
   .footer-note{font-size:11.5px; color:var(--gris); text-align:center; margin-top:20px; line-height:1.6;}
 
+  .seccion-bloqueada{opacity:.45; pointer-events:none; user-select:none;}
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(11,61,92,0.55);
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:#fff; border-radius:12px; max-width:480px; width:100%;
+    max-height:85vh; overflow-y:auto; padding:24px 26px;
+  }
+  .modal h3{margin:0 0 10px; font-size:16px; color:var(--azul-inst);}
+  .modal p{font-size:13.5px; line-height:1.6; margin:0 0 6px;}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+  .modal-actions .btn-calc{margin-top:0;}
+  .btn-secondary{background:#EEF3F5 !important; color:var(--azul-inst) !important;}
+  .btn-secondary:hover{background:#dde8ec !important;}
+  .resumen-seccion{margin-bottom:12px; font-size:12.5px; line-height:1.6;}
+  .resumen-seccion b{color:var(--azul-inst); display:block; margin-bottom:2px; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px;}
+  .resumen-nota{font-size:11.5px; color:var(--gris); margin-top:14px; border-top:1px solid var(--borde); padding-top:10px;}
+
   .autocomplete-wrap{position:relative;}
   .autocomplete-list{
     position:absolute; top:100%; left:0; right:0; background:#fff;
@@ -137,30 +158,30 @@
   </div>
 
   <!-- 2. EQUIPAMIENTO -->
-  <div class="section">
+  <div class="section seccion-bloqueada" id="seccion2">
     <h2><span class="num">2</span>Equipamiento y consultorios</h2>
     <div class="row">
-      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0"></div>
-      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0"></div>
+      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente')"></div>
+      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa')"></div>
     </div>
-    <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión)</span></label>
-    <input type="number" id="consOperativa" min="0" value="0">
-    <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener 2-3 funcionales)</span></label>
+    <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión — sugerido automáticamente, editable)</span></label>
+    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocado('consOperativa')">
+    <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener más de un consultorio funcional)</span></label>
     <input type="number" id="consFuncionales" min="0" value="0">
     <label>Lectoras de DNI electrónico</label>
     <div class="row">
-      <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0"></div>
-      <div><label class="hint">N° consultorios que requieren lectora</label><input type="number" id="lectorasReq" min="0" value="0"></div>
+      <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq')"></div>
+      <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocado('lectorasReq')"></div>
     </div>
     <label>Cableado de red <span class="hint">(punto activo hasta el consultorio)</span></label>
     <div class="row">
-      <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0"></div>
-      <div><label class="hint">N° consultorios con cableado deficiente</label><input type="number" id="cableadoDeficiente" min="0" value="0"></div>
+      <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0" oninput="sugerirResta('consTotal','cableadoBueno','cableadoDeficiente')"></div>
+      <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocado('cableadoDeficiente')"></div>
     </div>
   </div>
 
   <!-- 3. SERVIDOR -->
-  <div class="section">
+  <div class="section seccion-bloqueada" id="seccion3">
     <h2><span class="num">3</span>Servidor</h2>
     <label>¿La IPRESS cuenta con servidor?</label>
     <div class="radio-group">
@@ -182,7 +203,7 @@
   </div>
 
   <!-- 4. SISTEMA DE GESTIÓN HOSPITALARIA -->
-  <div class="section">
+  <div class="section seccion-bloqueada" id="seccion4">
     <h2><span class="num">4</span>Sistema de gestión hospitalaria</h2>
     <label>¿Cuenta con sistema de gestión hospitalaria?</label>
     <div class="radio-group">
@@ -248,7 +269,7 @@
   </div>
 
   <!-- 5. INTEROPERABILIDAD (WS) -->
-  <div class="section">
+  <div class="section seccion-bloqueada" id="seccion5">
     <h2><span class="num">5</span>Interoperabilidad (Web Services)</h2>
     <p style="font-size:12px; color:var(--gris); margin:-4px 0 14px; line-height:1.5;">
       Distinción importante: <b>Automática</b> = el sistema se conecta solo, sin intervención manual.
@@ -285,7 +306,7 @@
   </div>
 
   <!-- 6. CONECTIVIDAD E INFRAESTRUCTURA -->
-  <div class="section">
+  <div class="section seccion-bloqueada" id="seccion6">
     <h2><span class="num">6</span>Conectividad e infraestructura</h2>
     <div class="row">
       <div><label>¿Cuenta con internet?</label>
@@ -306,7 +327,7 @@
   </div>
 
   <!-- 7. RECURSO HUMANO Y PLANIFICACIÓN -->
-  <div class="section">
+  <div class="section seccion-bloqueada" id="seccion7">
     <h2><span class="num">7</span>Recurso humano y planificación</h2>
     <div class="row">
       <div><label>N° personal TI Nombrado/Contratado</label><input type="number" id="personalTiNombrado" min="0" value="0"></div>
@@ -324,23 +345,23 @@
 
     <label style="margin-top:18px; border-top:1px solid var(--borde); padding-top:14px;">Director(a) de la IPRESS</label>
     <div class="row">
-      <div><input type="text" id="directorNombre" placeholder="Nombre completo"></div>
-      <div><input type="text" id="directorCelular" placeholder="Celular"></div>
-      <div><input type="text" id="directorCorreo" placeholder="Correo"></div>
+      <div><input type="text" id="directorNombre" placeholder="Nombre completo" oninput="soloLetras(this)"></div>
+      <div><input type="text" id="directorCelular" placeholder="Celular" oninput="soloNumeros(this)"></div>
+      <div><input type="email" id="directorCorreo" placeholder="Correo" class="campo-correo"></div>
     </div>
 
     <label>Jefe(a) de la Unidad de Seguros</label>
     <div class="row">
-      <div><input type="text" id="jefeSegurosNombre" placeholder="Nombre completo"></div>
-      <div><input type="text" id="jefeSegurosCelular" placeholder="Celular"></div>
-      <div><input type="text" id="jefeSegurosCorreo" placeholder="Correo"></div>
+      <div><input type="text" id="jefeSegurosNombre" placeholder="Nombre completo" oninput="soloLetras(this)"></div>
+      <div><input type="text" id="jefeSegurosCelular" placeholder="Celular" oninput="soloNumeros(this)"></div>
+      <div><input type="email" id="jefeSegurosCorreo" placeholder="Correo" class="campo-correo"></div>
     </div>
 
     <label>Jefe(a) de Estadística e Informática / Responsable TI</label>
     <div class="row">
-      <div><input type="text" id="jefeTiNombre" placeholder="Nombre completo"></div>
-      <div><input type="text" id="jefeTiCelular" placeholder="Celular"></div>
-      <div><input type="text" id="jefeTiCorreo" placeholder="Correo"></div>
+      <div><input type="text" id="jefeTiNombre" placeholder="Nombre completo" oninput="soloLetras(this)"></div>
+      <div><input type="text" id="jefeTiCelular" placeholder="Celular" oninput="soloNumeros(this)"></div>
+      <div><input type="email" id="jefeTiCorreo" placeholder="Correo" class="campo-correo"></div>
     </div>
 
     <label style="margin-top:18px; border-top:1px solid var(--borde); padding-top:14px;">Responsable del registro <span style="color:var(--rojo-crit);">*</span></label>
@@ -351,6 +372,30 @@
   <div id="msgGuardado" style="text-align:center; font-size:12.5px; margin-top:8px; color:var(--gris);"></div>
 
   <div class="footer-note">La evaluación de brechas y el status (Óptimo/En proceso/Crítico) se revisan desde el panel de administración.</div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN -->
+<div class="modal-overlay" id="modalConfirmar">
+  <div class="modal">
+    <h3>Confirmar registro</h3>
+    <p id="textoConfirmacion"></p>
+    <div class="modal-actions">
+      <button class="btn-calc btn-secondary" onclick="cerrarConfirmacion()">Cancelar</button>
+      <button class="btn-calc" style="background:var(--verde-ok);" onclick="confirmarYGuardar()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE RESUMEN POST-GUARDADO -->
+<div class="modal-overlay" id="modalResumen">
+  <div class="modal">
+    <h3>✓ Registro guardado</h3>
+    <p id="resumenTitulo" style="font-weight:600; color:var(--azul-inst);"></p>
+    <div id="resumenContenido"></div>
+    <div class="modal-actions">
+      <button class="btn-calc" onclick="cerrarResumen()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -384,7 +429,7 @@ function buscarIPRESS(valor){
   lista.classList.add('show');
 }
 
-function seleccionarIPRESS(codigo){
+async function seleccionarIPRESS(codigo){
   const item = BASE_IPRESS.find(i => i.r === codigo);
   if(!item) return;
   document.getElementById('reniIpress').value = item.r;
@@ -397,6 +442,133 @@ function seleccionarIPRESS(codigo){
   document.getElementById('categoria').value = item.c || '';
   document.getElementById('unidadEjecutora').value = item.u || '';
   document.getElementById('listaSugerencias').classList.remove('show');
+
+  window._registroBloqueado = false;
+
+  if(!API_URL.includes('PEGA_AQUI')){
+    try{
+      const res = await fetch(API_URL + '?action=get&renipress=' + encodeURIComponent(item.r));
+      const data = await res.json();
+      const registroPrevio = data.record;
+
+      if(registroPrevio){
+        const fecha = new Date(String(registroPrevio.FECHA_REGISTRO).replace(' ', 'T'));
+        const horas = (Date.now() - fecha.getTime()) / (1000 * 60 * 60);
+        const habilitado = registroPrevio.HABILITADO_EDICION === 'Si';
+
+        if(horas < 48 || habilitado){
+          // Editable: pedir confirmación antes de precargar
+          const confirma = confirm(
+            'Ya existe un registro para ' + item.n + ' del ' + registroPrevio.FECHA_REGISTRO + '. ' +
+            '¿Estás seguro/a de actualizar la información previamente registrada?'
+          );
+          if(confirma){
+            precargarDatos(registroPrevio);
+            desbloquearSecciones();
+          } else {
+            // Cancela: se limpia la selección para evitar guardar un duplicado sin querer
+            document.getElementById('reniIpress').value = '';
+            document.getElementById('buscarIpress').value = '';
+            return;
+          }
+        } else {
+          // Confirmado y no habilitado: se bloquea la edición
+          alert(
+            'El registro de ' + item.n + ' ya fue confirmado (pasadas 48 horas desde el ' + registroPrevio.FECHA_REGISTRO + '). ' +
+            'Si necesitas corregirlo, solicita al equipo de coordinación que habilite la corrección desde el panel de administración.'
+          );
+          window._registroBloqueado = true;
+          document.getElementById('reniIpress').value = ''; // evita que se guarde por error
+          return;
+        }
+      } else {
+        desbloquearSecciones();
+      }
+    } catch(err){
+      // Si falla la consulta (ej. sin conexión), se permite continuar en modo normal sin precarga
+      desbloquearSecciones();
+    }
+  } else {
+    desbloquearSecciones();
+  }
+}
+
+function desbloquearSecciones(){
+  ['seccion2','seccion3','seccion4','seccion5','seccion6','seccion7'].forEach(id => {
+    document.getElementById(id).classList.remove('seccion-bloqueada');
+  });
+}
+
+function precargarDatos(r){
+  const setVal = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined && val !== null) el.value = val; };
+  const setChk = (id, val) => { const el = document.getElementById(id); if(el) el.checked = (val === 'Si'); };
+  const setRadio = (name, val) => { const el = document.querySelector(`input[name=${name}][value="${val}"]`); if(el) el.checked = true; };
+
+  setVal('red', r.RED_MICRORRED);
+  setVal('consTotal', r.CONSULTORIOS_TOTALES);
+  setVal('consEquip', r.CONSULTORIOS_EQUIPADOS);
+  setVal('consOperativa', r.CONSULTORIOS_PC_OPERATIVA);
+  marcarTocado('consOperativa');
+  setVal('consFuncionales', r.CONSULTORIOS_FUNCIONALES);
+  setVal('lectorasInst', r.LECTORAS_INSTALADAS);
+  setVal('lectorasReq', r.LECTORAS_REQUERIDAS);
+  marcarTocado('lectorasReq');
+  setVal('cableadoBueno', r.CONSULTORIOS_CABLEADO_BUEN_ESTADO);
+  setVal('cableadoDeficiente', r.CONSULTORIOS_CABLEADO_DEFICIENTE);
+  marcarTocado('cableadoDeficiente');
+
+  setRadio('servidor', r.TIENE_SERVIDOR === 'Si' ? 'si' : (r.TIENE_SERVIDOR === 'No' ? 'no' : ''));
+  toggle('condServidor', r.TIENE_SERVIDOR === 'Si');
+  setVal('tipoServidor', r.TIPO_SERVIDOR);
+  setVal('capacidadServidor', r.CAPACIDAD_DISPONIBLE);
+
+  setRadio('sgh', r.TIENE_SGH === 'Si' ? 'si' : (r.TIENE_SGH === 'No' ? 'no' : ''));
+  toggleSGH(r.TIENE_SGH === 'Si');
+  setVal('nombreSistema', r.NOMBRE_SISTEMA);
+  setChk('svcConsultaExterna', r.SVC_CONSULTA_EXTERNA);
+  setChk('svcHospitalizacion', r.SVC_HOSPITALIZACION);
+  setChk('svcEmergencia', r.SVC_EMERGENCIA);
+  setChk('svcFarmacia', r.SVC_FARMACIA);
+  setChk('svcLaboratorio', r.SVC_LABORATORIO);
+  setChk('svcImagenes', r.SVC_DIAGNOSTICO_IMAGENES);
+  setChk('svcObstetrico', r.SVC_CENTRO_OBSTETRICO);
+  setChk('svcQuirurgico', r.SVC_CENTRO_QUIRURGICO);
+  setChk('svcUci', r.SVC_UCI_UCIN);
+  setVal('enviaSetisis', r.ENVIA_SETISIS);
+  setVal('situacionActual', r.SITUACION_SIN_SGH);
+  setVal('sistemaPropuesto', r.SISTEMA_PROPUESTO);
+  setVal('fechaImplementacion', r.FECHA_IMPLEMENTACION_PLANIFICADA);
+  setVal('fechaPrimerEnvio', r.FECHA_PRIMER_ENVIO_SETISIS);
+
+  setVal('wsRefcon', r.WS_REFCON);
+  setVal('wsAcredita', r.WS_ACREDITA);
+  setVal('wsConsultaAfiliados', r.WS_CONSULTA_AFILIADOS);
+  setVal('wsSetisis', r.WS_SETISIS);
+  setVal('wsSismed', r.WS_SISMED);
+  setVal('wsHis', r.WS_HIS);
+
+  setVal('tieneInternet', r.TIENE_INTERNET);
+  setVal('estabilidad', r.ESTABILIDAD);
+  setVal('velocidadInternet', r.VELOCIDAD_INTERNET);
+  setRadio('ups', r.UPS);
+
+  setVal('personalTiNombrado', r.PERSONAL_TI_NOMBRADO);
+  setVal('personalTiLocador', r.PERSONAL_TI_LOCADOR);
+  setVal('profesionalesTotal', r.PROFESIONALES_SALUD_TOTAL);
+  setVal('profesionalesDnie', r.PROFESIONALES_CON_DNIE);
+  setVal('capacitacion', r.CAPACITACION_PERSONAL);
+
+  setVal('directorNombre', r.DIRECTOR_NOMBRE);
+  setVal('directorCelular', r.DIRECTOR_CELULAR);
+  setVal('directorCorreo', r.DIRECTOR_CORREO);
+  setVal('jefeSegurosNombre', r.JEFE_SEGUROS_NOMBRE);
+  setVal('jefeSegurosCelular', r.JEFE_SEGUROS_CELULAR);
+  setVal('jefeSegurosCorreo', r.JEFE_SEGUROS_CORREO);
+  setVal('jefeTiNombre', r.JEFE_TI_NOMBRE);
+  setVal('jefeTiCelular', r.JEFE_TI_CELULAR);
+  setVal('jefeTiCorreo', r.JEFE_TI_CORREO);
+
+  setVal('responsable', r.RESPONSABLE);
 }
 
 document.addEventListener('click', function(e){
@@ -404,6 +576,78 @@ document.addEventListener('click', function(e){
     document.getElementById('listaSugerencias').classList.remove('show');
   }
 });
+
+// Bloquea valores negativos en cualquier input numérico del formulario
+document.addEventListener('input', function(e){
+  if(e.target.type === 'number' && e.target.value !== '' && parseFloat(e.target.value) < 0){
+    e.target.value = 0;
+  }
+});
+
+function soloLetras(input){
+  input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü ]/g, '');
+}
+
+function soloNumeros(input){
+  input.value = input.value.replace(/\D/g, '').slice(0, 9);
+}
+
+function validarCoherencia(){
+  const consTotal = parseFloat(document.getElementById('consTotal').value) || 0;
+  const consEquip = parseFloat(document.getElementById('consEquip').value) || 0;
+  const consOperativa = parseFloat(document.getElementById('consOperativa').value) || 0;
+  const cableadoBueno = parseFloat(document.getElementById('cableadoBueno').value) || 0;
+  const lectorasInst = parseFloat(document.getElementById('lectorasInst').value) || 0;
+  const lectorasReq = parseFloat(document.getElementById('lectorasReq').value) || 0;
+  const fechaImpl = document.getElementById('fechaImplementacion').value;
+  const fechaEnvio = document.getElementById('fechaPrimerEnvio').value;
+
+  if(consEquip > consTotal){
+    return 'Los "consultorios equipados con PC" (' + consEquip + ') no pueden ser más que los "consultorios totales" (' + consTotal + ').';
+  }
+  if(consOperativa > consEquip){
+    return 'Los "consultorios con PC operativa" (' + consOperativa + ') no pueden ser más que los "consultorios equipados" (' + consEquip + ').';
+  }
+  if(cableadoBueno > consTotal){
+    return 'Los "consultorios con cableado en buen estado" (' + cableadoBueno + ') no pueden ser más que los "consultorios totales" (' + consTotal + ').';
+  }
+  if(lectorasInst > lectorasReq && lectorasReq > 0){
+    return 'Las "lectoras instaladas" (' + lectorasInst + ') superan a las "lectoras requeridas" (' + lectorasReq + '). Verifica el dato.';
+  }
+  if(fechaImpl && fechaEnvio && fechaEnvio < fechaImpl){
+    return 'La "fecha de primer envío a SETI-SIS" no puede ser anterior a la "fecha de implementación planificada".';
+  }
+  return null;
+}
+
+function validarCorreos(){
+  const campos = document.querySelectorAll('.campo-correo');
+  for(const campo of campos){
+    const val = campo.value.trim();
+    if(val !== '' && !val.includes('@')){
+      return campo;
+    }
+  }
+  return null;
+}
+
+function marcarTocado(id){
+  document.getElementById(id).dataset.tocado = '1';
+}
+
+function sugerir(sourceId, targetId){
+  const target = document.getElementById(targetId);
+  if(target.dataset.tocado === '1') return; // el usuario ya lo editó manualmente
+  target.value = document.getElementById(sourceId).value || 0;
+}
+
+function sugerirResta(sourceAId, sourceBId, targetId){
+  const target = document.getElementById(targetId);
+  if(target.dataset.tocado === '1') return; // el usuario ya lo editó manualmente
+  const a = parseFloat(document.getElementById(sourceAId).value) || 0;
+  const b = parseFloat(document.getElementById(sourceBId).value) || 0;
+  target.value = Math.max(a - b, 0);
+}
 
 function toggle(id, show){
   document.getElementById(id).classList.toggle('show', show);
@@ -517,12 +761,12 @@ function recopilarDatos(){
   };
 }
 
-async function guardarRegistro(){
+function guardarRegistro(){
   const msg = document.getElementById('msgGuardado');
   const renipress = document.getElementById('reniIpress').value;
   const responsable = document.getElementById('responsable').value.trim();
 
-  if(!renipress){
+  if(!renipress || window._registroBloqueado){
     msg.style.color = 'var(--rojo-crit)';
     msg.textContent = 'Selecciona primero una IPRESS en la sección 1 (Identificación).';
     return;
@@ -533,12 +777,39 @@ async function guardarRegistro(){
     document.getElementById('responsable').focus();
     return;
   }
+  const errorCoherencia = validarCoherencia();
+  if(errorCoherencia){
+    msg.style.color = 'var(--rojo-crit)';
+    msg.textContent = errorCoherencia;
+    return;
+  }
+  const correoInvalido = validarCorreos();
+  if(correoInvalido){
+    msg.style.color = 'var(--rojo-crit)';
+    msg.textContent = 'Revisa el correo ingresado (falta "@") en los contactos de la sección 7.';
+    correoInvalido.focus();
+    return;
+  }
   if(API_URL.includes('PEGA_AQUI')){
     msg.style.color = 'var(--rojo-crit)';
     msg.textContent = 'Falta configurar la URL del Apps Script en la constante API_URL.';
     return;
   }
 
+  msg.textContent = '';
+  const nombreIpress = document.getElementById('nombreIpress').value;
+  document.getElementById('textoConfirmacion').textContent =
+    '¿Confirmas el registro de ' + nombreIpress + ' - ' + renipress + '?';
+  document.getElementById('modalConfirmar').classList.add('show');
+}
+
+function cerrarConfirmacion(){
+  document.getElementById('modalConfirmar').classList.remove('show');
+}
+
+async function confirmarYGuardar(){
+  cerrarConfirmacion();
+  const msg = document.getElementById('msgGuardado');
   const payload = recopilarDatos();
 
   const btn = document.getElementById('btnGuardar');
@@ -554,7 +825,8 @@ async function guardarRegistro(){
     const data = await res.json();
     if(data.status === 'ok'){
       msg.style.color = 'var(--verde-ok)';
-      msg.textContent = '✓ Registro guardado correctamente. La evaluación se realiza desde el panel de administración.';
+      msg.textContent = '✓ Registro guardado correctamente.';
+      mostrarResumen(payload);
     } else {
       msg.style.color = 'var(--rojo-crit)';
       msg.textContent = 'Error al guardar: ' + (data.error || data.message || 'desconocido');
@@ -564,6 +836,46 @@ async function guardarRegistro(){
     msg.textContent = 'Error de conexión: ' + err;
   }
   btn.disabled = false;
+}
+
+function mostrarResumen(d){
+  const svcLabels = {
+    SVC_CONSULTA_EXTERNA: 'Consulta externa', SVC_HOSPITALIZACION: 'Hospitalización',
+    SVC_EMERGENCIA: 'Emergencia', SVC_FARMACIA: 'Farmacia', SVC_LABORATORIO: 'Laboratorio',
+    SVC_DIAGNOSTICO_IMAGENES: 'Diagnóstico por Imágenes', SVC_CENTRO_OBSTETRICO: 'Centro Obstétrico',
+    SVC_CENTRO_QUIRURGICO: 'Centro Quirúrgico', SVC_UCI_UCIN: 'UCI/UCIN',
+  };
+  const desplegados = Object.keys(svcLabels).filter(k => d[k] === 'Si').map(k => svcLabels[k]);
+  const wsKeys = ['WS_REFCON','WS_ACREDITA','WS_CONSULTA_AFILIADOS','WS_SETISIS','WS_SISMED','WS_HIS'];
+  const wsAutomaticas = wsKeys.filter(k => d[k] === 'Automática').length;
+
+  document.getElementById('resumenTitulo').textContent = d.IPRESS + ' · ' + d.RENIPRESS;
+  document.getElementById('resumenContenido').innerHTML = `
+    <div class="resumen-seccion"><b>Equipamiento</b>
+      ${d.CONSULTORIOS_EQUIPADOS} de ${d.CONSULTORIOS_TOTALES} consultorios equipados ·
+      ${d.LECTORAS_INSTALADAS} de ${d.LECTORAS_REQUERIDAS} lectoras DNI
+    </div>
+    <div class="resumen-seccion"><b>Sistema de gestión</b>
+      ${d.NOMBRE_SISTEMA || 'No cuenta con sistema'} ·
+      ${desplegados.length} de 9 servicios desplegados${desplegados.length ? ' (' + desplegados.join(', ') + ')' : ''}
+    </div>
+    <div class="resumen-seccion"><b>Interoperabilidad</b>
+      ${wsAutomaticas} de 6 Web Services automáticas
+    </div>
+    <div class="resumen-seccion"><b>Contacto TI</b>
+      ${d.JEFE_TI_NOMBRE || 'No registrado'} ${d.JEFE_TI_CELULAR ? '· ' + d.JEFE_TI_CELULAR : ''}
+    </div>
+    <div class="resumen-nota">
+      Se envió un correo con el resumen ejecutivo a los contactos registrados.
+      Cualquier corrección puede realizarse dentro de las próximas 48 horas volviendo a registrar
+      la información correcta. La evaluación final de brechas se realiza desde el panel de administración.
+    </div>
+  `;
+  document.getElementById('modalResumen').classList.add('show');
+}
+
+function cerrarResumen(){
+  document.getElementById('modalResumen').classList.remove('show');
 }
 </script>
 </body>

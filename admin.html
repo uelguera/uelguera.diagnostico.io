@@ -140,13 +140,14 @@
             <th>Categoría</th>
             <th>% Interop.</th>
             <th>Status</th>
+            <th>Estado</th>
             <th>Fecha registro</th>
             <th>Evaluación</th>
             <th>Acción</th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="9" class="estado-msg">Cargando registros...</td></tr>
+          <tr><td colspan="10" class="estado-msg">Cargando registros...</td></tr>
         </tbody>
       </table>
     </div>
@@ -188,21 +189,33 @@ function badgeStatus(status){
   return '<span class="badge badge-na">S/D</span>';
 }
 
+// Determina si un registro sigue "En revisión" (dentro de 48h) o ya "Confirmado"
+function estadoRegistro(r){
+  if(!r.FECHA_REGISTRO) return { label: 'S/D', clase: 'badge-na', confirmado: false };
+  const fecha = new Date(String(r.FECHA_REGISTRO).replace(' ', 'T'));
+  if(isNaN(fecha.getTime())) return { label: 'S/D', clase: 'badge-na', confirmado: false };
+  const horas = (Date.now() - fecha.getTime()) / (1000 * 60 * 60);
+  if(horas < 48){
+    return { label: 'En revisión', clase: 'badge-proceso', confirmado: false };
+  }
+  return { label: 'Confirmado', clase: 'badge-optimo', confirmado: true };
+}
+
 async function cargarRegistros(){
   const tbody = document.getElementById('tbody');
   if(API_URL.includes("PEGA_AQUI")){
     document.getElementById('configBox').classList.add('show');
-    tbody.innerHTML = '<tr><td colspan="9" class="estado-msg">Configura la URL del Apps Script para ver los registros.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="estado-msg">Configura la URL del Apps Script para ver los registros.</td></tr>';
     return;
   }
-  tbody.innerHTML = '<tr><td colspan="9" class="estado-msg">Cargando registros...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" class="estado-msg">Cargando registros...</td></tr>';
   try{
     const res = await fetch(API_URL + "?action=list");
     const data = await res.json();
     registros = data.records || [];
     render(registros);
   } catch(err){
-    tbody.innerHTML = '<tr><td colspan="9" class="estado-msg">Error al cargar: ' + err + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="estado-msg">Error al cargar: ' + err + '</td></tr>';
   }
 }
 
@@ -210,10 +223,14 @@ function render(lista){
   const tbody = document.getElementById('tbody');
   document.getElementById('conteo').textContent = lista.length + ' registro(s) encontrado(s)';
   if(lista.length === 0){
-    tbody.innerHTML = '<tr><td colspan="9" class="estado-msg">Sin registros por el momento.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="estado-msg">Sin registros por el momento.</td></tr>';
     return;
   }
-  tbody.innerHTML = lista.map(r => `
+  tbody.innerHTML = lista.map(r => {
+    const estado = estadoRegistro(r);
+    const yaHabilitado = r.HABILITADO_EDICION === 'Si';
+    const mostrarBotonHabilitar = estado.confirmado && !yaHabilitado;
+    return `
     <tr>
       <td>${r.RENIPRESS || ''}</td>
       <td>${r.IPRESS || ''}</td>
@@ -221,14 +238,32 @@ function render(lista){
       <td>${r.CATEGORIA || ''}</td>
       <td>${r.PCT_INTEROPERABILIDAD ? (Number(r.PCT_INTEROPERABILIDAD)*100).toFixed(0)+'%' : 's/d'}</td>
       <td>${badgeStatus(r.STATUS_FINAL)}</td>
+      <td><span class="badge ${estado.clase}">${estado.label}</span>${yaHabilitado ? ' <span style="font-size:10.5px; color:var(--gris);">(corrección habilitada)</span>' : ''}</td>
       <td>${r.FECHA_REGISTRO || ''}</td>
       <td>${r.LIKERT_EQUIPAMIENTO ? '✓ Evaluado' : '<span style="color:var(--gris);">Pendiente</span>'}</td>
       <td style="white-space:nowrap;">
         <button class="btn btn-evaluar" onclick="abrirModal('${r.RENIPRESS}')">Evaluar</button>
+        ${mostrarBotonHabilitar ? `<button class="btn" style="background:var(--azul-claro);" onclick="habilitarCorreccion('${r.RENIPRESS}')">Habilitar corrección</button>` : ''}
         <button class="btn btn-danger" onclick="eliminarRegistro('${r.RENIPRESS}')">Eliminar</button>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
+}
+
+async function habilitarCorreccion(renipress){
+  if(!confirm('¿Habilitar una corrección puntual para ' + renipress + '? Es una autorización de un solo uso: se cierra de nuevo apenas se guarde la corrección.')) return;
+  try{
+    const res = await fetch(API_URL + "?action=habilitar&renipress=" + encodeURIComponent(renipress));
+    const data = await res.json();
+    if(data.status === 'ok'){
+      cargarRegistros();
+    } else {
+      alert('No se pudo habilitar: ' + (data.message || 'error desconocido'));
+    }
+  } catch(err){
+    alert('Error al habilitar: ' + err);
+  }
 }
 
 function filtrar(){
