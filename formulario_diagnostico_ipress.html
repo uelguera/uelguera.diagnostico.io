@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diagnóstico de Interoperabilidad IPRESS</title>
 <style>
   :root{
@@ -112,6 +113,46 @@
   .resumen-seccion b{color:var(--azul-inst); display:block; margin-bottom:2px; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px;}
   .resumen-nota{font-size:11.5px; color:var(--gris); margin-top:14px; border-top:1px solid var(--borde); padding-top:10px;}
 
+  /* ===== RESPONSIVE MÓVIL ===== */
+  @media (max-width: 640px){
+    .wrap{padding:16px 12px 60px;}
+    .header{padding:20px 18px;}
+    .header h1{font-size:19px;}
+    .header p{font-size:12.5px;}
+    .section{padding:16px 16px;}
+    .section h2{font-size:13.5px;}
+
+    /* Apila las columnas de 2-3 en una sola en pantallas angostas */
+    .row{flex-direction:column; gap:0;}
+    .row > div{width:100%;}
+
+    input[type=text], input[type=number], input[type=date], input[type=email], select, textarea{
+      font-size:16px; /* evita el zoom automático de iOS al enfocar un campo */
+      padding:11px 10px;
+    }
+
+    .radio-group{gap:8px;}
+    .radio-group label{padding:9px 12px; font-size:13.5px;}
+
+    .btn-calc{padding:14px; font-size:15px;}
+
+    .modal{max-width:100%; padding:20px 18px;}
+    .modal-actions{flex-direction:column;}
+
+    .likert-scale{flex-wrap:wrap;}
+    .likert-scale label{flex:1 1 30%; min-width:50px;}
+
+    table{font-size:11.5px;}
+    thead th, tbody td{padding:7px 8px;}
+
+    .autocomplete-list{max-height:180px;}
+  }
+
+  @media (max-width: 400px){
+    .header h1{font-size:17px;}
+    .section h2{font-size:12.5px;}
+  }
+
   .autocomplete-wrap{position:relative;}
   .autocomplete-list{
     position:absolute; top:100%; left:0; right:0; background:#fff;
@@ -166,13 +207,13 @@
 
   <!-- 2. EQUIPAMIENTO -->
   <div class="section seccion-bloqueada" id="seccion2">
-    <h2><span class="num">2</span>Equipamiento y consultorios</h2>
+    <h2><span class="num">2</span>Estado situacional de Consulta Externa</h2>
     <div class="row">
-      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); validarEquipamiento(); validarFuncionales(); validarCableado()"></div>
+      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); sugerirResta('consTotal','consOperativa','pcCE'); validarEquipamiento(); validarFuncionales(); validarCableado(); calcularTotalPCs()"></div>
       <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa'); validarEquipamiento()"></div>
     </div>
     <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión — sugerido automáticamente, editable)</span></label>
-    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocado('consOperativa'); validarEquipamiento()">
+    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocadoIgual('consOperativa','consEquip'); validarEquipamiento(); sugerirResta('consTotal','consOperativa','pcCE'); calcularTotalPCs()">
     <div id="avisoEquipamiento" class="aviso-coherencia"></div>
 
     <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener más de un consultorio funcional)</span></label>
@@ -182,21 +223,52 @@
     <label>Lectoras de DNI electrónico</label>
     <div class="row">
       <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); validarLectoras()"></div>
-      <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocado('lectorasReq'); validarLectoras()"></div>
+      <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocadoResta('lectorasReq','consTotal','lectorasInst'); validarLectoras()"></div>
     </div>
     <div id="avisoLectoras" class="aviso-coherencia"></div>
 
     <label>Cableado de red <span class="hint">(punto activo hasta el consultorio)</span></label>
     <div class="row">
       <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0" oninput="sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); validarCableado()"></div>
-      <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocado('cableadoDeficiente'); validarCableado()"></div>
+      <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocadoResta('cableadoDeficiente','consTotal','cableadoBueno'); validarCableado()"></div>
     </div>
     <div id="avisoCableado" class="aviso-coherencia"></div>
   </div>
 
-  <!-- 3. SERVIDOR -->
+  <!-- 3. BRECHA TECNOLÓGICA POR PUNTO DE GENERACIÓN DE FUA -->
   <div class="section seccion-bloqueada" id="seccion3">
-    <h2><span class="num">3</span>Servidor</h2>
+    <h2><span class="num">3</span>Brecha tecnológica por punto de generación de FUA</h2>
+    <label class="hint" style="display:block; margin-top:-4px; margin-bottom:14px;">N° de PCs necesarias en cada punto donde se genera el FUA</label>
+    <div class="row">
+      <div><label class="hint">Admisión</label><input type="number" id="pcAdmision" min="0" value="0" oninput="calcularTotalPCs()"></div>
+      <div><label class="hint">Triaje</label><input type="number" id="pcTriaje" min="0" value="0" oninput="calcularTotalPCs()"></div>
+    </div>
+    <div class="row">
+      <div><label class="hint">Consulta Externa (CE) <span class="hint">(sugerido: totales − PC operativa)</span></label><input type="number" id="pcCE" min="0" value="0" oninput="marcarTocadoResta('pcCE','consTotal','consOperativa'); calcularTotalPCs()"></div>
+      <div><label class="hint">Emergencia</label><input type="number" id="pcEmergencia" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
+    </div>
+    <div class="row">
+      <div><label class="hint">Hospitalización</label><input type="number" id="pcHospitalizacion" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
+      <div><label class="hint">Centro Obstétrico</label><input type="number" id="pcObstetrico" min="0" value="0" oninput="calcularTotalPCs()"></div>
+    </div>
+    <div class="row">
+      <div><label class="hint">Centro Quirúrgico</label><input type="number" id="pcQuirurgico" min="0" value="0" oninput="calcularTotalPCs()"></div>
+      <div><label class="hint">Farmacia</label><input type="number" id="pcFarmacia" min="0" value="0" oninput="calcularTotalPCs()"></div>
+    </div>
+    <div class="row">
+      <div><label class="hint">Laboratorio</label><input type="number" id="pcLaboratorio" min="0" value="0" oninput="calcularTotalPCs()"></div>
+      <div><label class="hint">Diagnóstico por Imágenes</label><input type="number" id="pcImagenes" min="0" value="0" oninput="calcularTotalPCs()"></div>
+    </div>
+    <div id="avisoPCsObligatorias" class="aviso-coherencia"></div>
+    <div class="modal-total" style="margin-top:10px;">
+      <div style="font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.4px;">Total PCs necesarias</div>
+      <div class="val" id="totalPCsNecesarias" style="font-size:26px; font-weight:700; color:var(--azul-inst);">0</div>
+    </div>
+  </div>
+
+  <!-- 4. SERVIDOR -->
+  <div class="section seccion-bloqueada" id="seccion4">
+    <h2><span class="num">4</span>Servidor</h2>
     <label>¿La IPRESS cuenta con servidor?</label>
     <div class="radio-group">
       <label><input type="radio" name="servidor" value="si" onchange="toggle('condServidor',true)"> Sí</label>
@@ -217,8 +289,8 @@
   </div>
 
   <!-- 4. SISTEMA DE GESTIÓN HOSPITALARIA -->
-  <div class="section seccion-bloqueada" id="seccion4">
-    <h2><span class="num">4</span>Sistema de gestión hospitalaria</h2>
+  <div class="section seccion-bloqueada" id="seccion5">
+    <h2><span class="num">5</span>Sistema de gestión hospitalaria</h2>
     <label>¿Cuenta con sistema de gestión hospitalaria?</label>
     <div class="radio-group">
       <label><input type="radio" name="sgh" value="si" onchange="toggleSGH(true)"> Sí</label>
@@ -284,8 +356,8 @@
   </div>
 
   <!-- 5. INTEROPERABILIDAD (WS) -->
-  <div class="section seccion-bloqueada" id="seccion5">
-    <h2><span class="num">5</span>Interoperabilidad (Web Services)</h2>
+  <div class="section seccion-bloqueada" id="seccion6">
+    <h2><span class="num">6</span>Interoperabilidad (Web Services)</h2>
     <p style="font-size:12px; color:var(--gris); margin:-4px 0 14px; line-height:1.5;">
       Distinción importante: <b>Automática</b> = el sistema se conecta solo, sin intervención manual.
       <b>Manual</b> = el personal ingresa a un portal web y digita/consulta a mano.
@@ -321,8 +393,8 @@
   </div>
 
   <!-- 6. CONECTIVIDAD E INFRAESTRUCTURA -->
-  <div class="section seccion-bloqueada" id="seccion6">
-    <h2><span class="num">6</span>Conectividad e infraestructura</h2>
+  <div class="section seccion-bloqueada" id="seccion7">
+    <h2><span class="num">7</span>Conectividad e infraestructura</h2>
     <div class="row">
       <div><label>¿Cuenta con internet?</label>
         <select id="tieneInternet"><option value="">Seleccione...</option><option>Sí</option><option>No</option></select>
@@ -342,8 +414,8 @@
   </div>
 
   <!-- 7. RECURSO HUMANO Y PLANIFICACIÓN -->
-  <div class="section seccion-bloqueada" id="seccion7">
-    <h2><span class="num">7</span>Recurso humano y planificación</h2>
+  <div class="section seccion-bloqueada" id="seccion8">
+    <h2><span class="num">8</span>Recurso humano y planificación</h2>
     <div class="row">
       <div><label>N° personal TI Nombrado/Contratado</label><input type="number" id="personalTiNombrado" min="0" value="0"></div>
       <div><label>N° personal TI Locador de servicios</label><input type="number" id="personalTiLocador" min="0" value="0"></div>
@@ -516,7 +588,7 @@ async function seleccionarIPRESS(codigo){
 }
 
 function desbloquearSecciones(){
-  ['seccion2','seccion3','seccion4','seccion5','seccion6','seccion7'].forEach(id => {
+  ['seccion2','seccion3','seccion4','seccion5','seccion6','seccion7','seccion8'].forEach(id => {
     document.getElementById(id).classList.remove('seccion-bloqueada');
   });
 }
@@ -538,6 +610,18 @@ function precargarDatos(r){
   setVal('cableadoBueno', r.CONSULTORIOS_CABLEADO_BUEN_ESTADO);
   setVal('cableadoDeficiente', r.CONSULTORIOS_CABLEADO_DEFICIENTE);
   marcarTocado('cableadoDeficiente');
+  setVal('pcAdmision', r.PC_NECESARIA_ADMISION);
+  setVal('pcTriaje', r.PC_NECESARIA_TRIAJE);
+  setVal('pcCE', r.PC_NECESARIA_CE);
+  marcarTocado('pcCE');
+  setVal('pcEmergencia', r.PC_NECESARIA_EMERGENCIA);
+  setVal('pcHospitalizacion', r.PC_NECESARIA_HOSPITALIZACION);
+  setVal('pcObstetrico', r.PC_NECESARIA_OBSTETRICO);
+  setVal('pcQuirurgico', r.PC_NECESARIA_QUIRURGICO);
+  setVal('pcFarmacia', r.PC_NECESARIA_FARMACIA);
+  setVal('pcLaboratorio', r.PC_NECESARIA_LABORATORIO);
+  setVal('pcImagenes', r.PC_NECESARIA_IMAGENES);
+  calcularTotalPCs();
 
   setRadio('servidor', r.TIENE_SERVIDOR === 'Si' ? 'si' : (r.TIENE_SERVIDOR === 'No' ? 'no' : ''));
   toggle('condServidor', r.TIENE_SERVIDOR === 'Si');
@@ -685,6 +769,19 @@ function checkFechas(){
 }
 function validarFechasEnVivo(){ return mostrarAviso('avisoFechas', checkFechas()); }
 
+function checkPCsObligatorias(){
+  const pcEmergencia = document.getElementById('pcEmergencia').value;
+  const pcHospitalizacion = document.getElementById('pcHospitalizacion').value;
+  const faltantes = [];
+  if(pcEmergencia === '' || parseFloat(pcEmergencia) === 0) faltantes.push('Emergencia');
+  if(pcHospitalizacion === '' || parseFloat(pcHospitalizacion) === 0) faltantes.push('Hospitalización');
+  if(faltantes.length > 0){
+    return 'No hay valor registrado en "N° de PCs necesarias" para: ' + faltantes.join(' y ') + '. Prácticamente todo hospital de nivel II/III cuenta con estos servicios — completa el dato.';
+  }
+  return null;
+}
+function validarPCsObligatorias(){ return mostrarAviso('avisoPCsObligatorias', checkPCsObligatorias()); }
+
 function checkProfesionales(){
   const total = parseFloat(document.getElementById('profesionalesTotal').value) || 0;
   const dnie = parseFloat(document.getElementById('profesionalesDnie').value) || 0;
@@ -697,7 +794,7 @@ function validarProfesionales(){ return mostrarAviso('avisoProfesionales', check
 
 // Validación combinada usada al intentar guardar (revisa todas las reglas)
 function validarCoherencia(){
-  return checkEquipamiento() || checkFuncionales() || checkCableado() || checkLectoras() || checkFechas() || checkProfesionales();
+  return checkEquipamiento() || checkFuncionales() || checkCableado() || checkLectoras() || checkFechas() || checkProfesionales() || checkPCsObligatorias();
 }
 
 // Refresca todos los avisos visuales (usado tras precargar datos de un registro previo)
@@ -708,6 +805,7 @@ function validarTodoEnVivo(){
   validarCableado();
   validarFechasEnVivo();
   validarProfesionales();
+  validarPCsObligatorias();
 }
 
 function validarCorreos(){
@@ -721,6 +819,28 @@ function validarCorreos(){
   return null;
 }
 
+// Solo marca "tocado" (y bloquea el autocompletado) si el valor escrito
+// es distinto al que se habría sugerido. Así, un clic accidental o volver
+// a escribir el mismo número no rompe la sugerencia automática.
+function marcarTocadoIgual(targetId, sourceId){
+  const target = document.getElementById(targetId);
+  const sugerido = parseFloat(document.getElementById(sourceId).value) || 0;
+  const actual = parseFloat(target.value) || 0;
+  if(actual !== sugerido) target.dataset.tocado = '1';
+  else delete target.dataset.tocado;
+}
+
+function marcarTocadoResta(targetId, sourceAId, sourceBId){
+  const target = document.getElementById(targetId);
+  const a = parseFloat(document.getElementById(sourceAId).value) || 0;
+  const b = parseFloat(document.getElementById(sourceBId).value) || 0;
+  const sugerido = Math.max(a - b, 0);
+  const actual = parseFloat(target.value) || 0;
+  if(actual !== sugerido) target.dataset.tocado = '1';
+  else delete target.dataset.tocado;
+}
+
+// Se mantiene por compatibilidad donde no aplica comparación (ej. tras precargar datos)
 function marcarTocado(id){
   document.getElementById(id).dataset.tocado = '1';
 }
@@ -737,6 +857,12 @@ function sugerirResta(sourceAId, sourceBId, targetId){
   const a = parseFloat(document.getElementById(sourceAId).value) || 0;
   const b = parseFloat(document.getElementById(sourceBId).value) || 0;
   target.value = Math.max(a - b, 0);
+}
+
+function calcularTotalPCs(){
+  const ids = ['pcAdmision','pcTriaje','pcCE','pcEmergencia','pcHospitalizacion','pcObstetrico','pcQuirurgico','pcFarmacia','pcLaboratorio','pcImagenes'];
+  const total = ids.reduce((sum, id) => sum + (parseFloat(document.getElementById(id).value) || 0), 0);
+  document.getElementById('totalPCsNecesarias').textContent = total;
 }
 
 function toggle(id, show){
@@ -816,6 +942,16 @@ function recopilarDatos(){
     CONSULTORIOS_FUNCIONALES: consFuncionales,
     LECTORAS_INSTALADAS: lectorasInst, LECTORAS_REQUERIDAS: lectorasReq,
     CONSULTORIOS_CABLEADO_BUEN_ESTADO: cableadoBueno, CONSULTORIOS_CABLEADO_DEFICIENTE: cableadoDeficiente,
+    PC_NECESARIA_ADMISION: parseFloat(document.getElementById('pcAdmision').value) || 0,
+    PC_NECESARIA_TRIAJE: parseFloat(document.getElementById('pcTriaje').value) || 0,
+    PC_NECESARIA_CE: parseFloat(document.getElementById('pcCE').value) || 0,
+    PC_NECESARIA_EMERGENCIA: parseFloat(document.getElementById('pcEmergencia').value) || 0,
+    PC_NECESARIA_HOSPITALIZACION: parseFloat(document.getElementById('pcHospitalizacion').value) || 0,
+    PC_NECESARIA_OBSTETRICO: parseFloat(document.getElementById('pcObstetrico').value) || 0,
+    PC_NECESARIA_QUIRURGICO: parseFloat(document.getElementById('pcQuirurgico').value) || 0,
+    PC_NECESARIA_FARMACIA: parseFloat(document.getElementById('pcFarmacia').value) || 0,
+    PC_NECESARIA_LABORATORIO: parseFloat(document.getElementById('pcLaboratorio').value) || 0,
+    PC_NECESARIA_IMAGENES: parseFloat(document.getElementById('pcImagenes').value) || 0,
     // Servidor
     TIENE_SERVIDOR: servidor === 'si' ? 'Si' : (servidor === 'no' ? 'No' : ''),
     TIPO_SERVIDOR: tipoServidor, CAPACIDAD_DISPONIBLE: capacidadServidor,
