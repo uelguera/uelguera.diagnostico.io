@@ -209,11 +209,11 @@
   <div class="section seccion-bloqueada" id="seccion2">
     <h2><span class="num">2</span>Estado situacional de Consulta Externa</h2>
     <div class="row">
-      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); sugerirResta('consTotal','consOperativa','pcCE'); validarEquipamiento(); validarFuncionales(); validarCableado(); calcularTotalPCs()"></div>
-      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa'); validarEquipamiento()"></div>
+      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); sugerirResta('consTotal','consEquip','pcCE'); validarEquipamiento(); validarFuncionales(); validarCableado(); calcularTotalPCs()"></div>
+      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa'); validarEquipamiento(); sugerirResta('consTotal','consEquip','pcCE'); calcularTotalPCs()"></div>
     </div>
     <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión — sugerido automáticamente, editable)</span></label>
-    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocadoIgual('consOperativa','consEquip'); validarEquipamiento(); sugerirResta('consTotal','consOperativa','pcCE'); calcularTotalPCs()">
+    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocadoIgual('consOperativa','consEquip'); validarEquipamiento(); calcularTotalPCs()">
     <div id="avisoEquipamiento" class="aviso-coherencia"></div>
 
     <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener más de un consultorio funcional)</span></label>
@@ -244,7 +244,7 @@
       <div><label class="hint">Triaje</label><input type="number" id="pcTriaje" min="0" value="0" oninput="calcularTotalPCs()"></div>
     </div>
     <div class="row">
-      <div><label class="hint">Consulta Externa (CE) <span class="hint">(sugerido: totales − PC operativa)</span></label><input type="number" id="pcCE" min="0" value="0" oninput="marcarTocadoResta('pcCE','consTotal','consOperativa'); calcularTotalPCs()"></div>
+      <div><label class="hint">Consulta Externa (CE) <span class="hint">(sugerido: totales − equipados con PC)</span></label><input type="number" id="pcCE" min="0" value="0" oninput="marcarTocadoResta('pcCE','consTotal','consEquip'); calcularTotalPCs()"></div>
       <div><label class="hint">Emergencia</label><input type="number" id="pcEmergencia" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
     </div>
     <div class="row">
