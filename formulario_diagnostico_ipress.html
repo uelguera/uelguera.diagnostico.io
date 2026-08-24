@@ -169,6 +169,32 @@
   .autocomplete-item .code{color:var(--azul-claro); font-weight:600; margin-right:8px;}
   .autocomplete-item .region{float:right; color:var(--gris); font-size:11.5px;}
   .autocomplete-empty{padding:10px; font-size:12.5px; color:var(--gris); font-style:italic;}
+
+  /* --- Pasos numerados (flujo de atención) --- */
+  .paso{display:flex; gap:14px; position:relative; padding-bottom:24px;}
+  .paso:last-child{padding-bottom:0;}
+  .paso:not(:last-child)::before{
+    content:''; position:absolute; left:15px; top:34px; bottom:0; width:2px; background:var(--borde);
+  }
+  .paso-num{
+    flex:0 0 auto; width:32px; height:32px; border-radius:50%; background:var(--azul-claro);
+    color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; z-index:1;
+  }
+  .paso-body{flex:1; padding-top:2px; min-width:0;}
+  .paso-titulo{font-weight:600; font-size:14px; color:#1a1a1a; display:flex; align-items:center; gap:8px; margin-bottom:2px;}
+  .paso-icono{font-size:16px;}
+  .paso-hint{color:var(--gris); font-weight:400; font-size:12px; margin-bottom:10px;}
+  .resumen-compacto{
+    font-size:12.5px; color:var(--gris); margin-top:8px; padding:8px 10px;
+    background:#f7f9fa; border-radius:6px; display:inline-block;
+  }
+  .resumen-compacto b{color:var(--azul-inst);}
+  .tag{
+    display:inline-block; font-size:10.5px; text-transform:uppercase; letter-spacing:.3px;
+    padding:2px 8px; border-radius:10px; font-weight:700;
+  }
+  .tag-ce{background:#E6F0F5; color:var(--azul-claro);}
+  .tag-emergencia{background:#FBE9E7; color:#B3401A;}
 </style>
 </head>
 <body>
@@ -206,107 +232,187 @@
     <input type="text" id="unidadEjecutora" readonly>
   </div>
 
-  <!-- 2. EQUIPAMIENTO -->
+  <!-- 2. CONSULTA EXTERNA -->
   <div class="section seccion-bloqueada" id="seccion2">
-    <h2><span class="num">2</span>Estado situacional de Consulta Externa</h2>
-    <div class="row">
-      <div><label>N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); sugerirResta('consTotal','consEquip','pcCE'); validarEquipamiento(); validarFuncionales(); validarCableado(); calcularTotalPCs()"></div>
-      <div><label>N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa'); validarEquipamiento(); sugerirResta('consTotal','consEquip','pcCE'); calcularTotalPCs()"></div>
-    </div>
-    <label>N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión — sugerido automáticamente, editable)</span></label>
-    <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocadoIgual('consOperativa','consEquip'); validarEquipamiento(); calcularTotalPCs()">
-    <div id="avisoEquipamiento" class="aviso-coherencia"></div>
+    <h2><span class="num">2</span>Consulta Externa — Diagnóstico de brecha tecnológica</h2>
 
-    <label>N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener más de un consultorio funcional)</span></label>
-    <input type="number" id="consFuncionales" min="0" value="0" oninput="validarFuncionales()">
-    <div id="avisoFuncionales" class="aviso-coherencia"></div>
-
-    <label>Lectoras de DNI electrónico</label>
-    <div class="row">
-      <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); validarLectoras()"></div>
-      <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocadoResta('lectorasReq','consTotal','lectorasInst'); validarLectoras()"></div>
+    <!-- PASO 1: Admisión CE -->
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🪪</span> Admisión <span class="tag tag-ce">CE</span></div>
+        <div class="paso-hint">Detalle por cada punto de admisión de Consulta Externa</div>
+        <div id="listaAdmisionesCE"></div>
+        <button type="button" class="btn-calc btn-secondary" style="margin-top:0;" onclick="agregarAdmisionCE()">+ Agregar admisión</button>
+        <div id="resumenAdmisionCE" class="resumen-compacto"></div>
+      </div>
     </div>
-    <div id="avisoLectoras" class="aviso-coherencia"></div>
 
-    <label>Cableado de red <span class="hint">(punto activo hasta el consultorio)</span></label>
-    <div class="row">
-      <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0" oninput="sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); validarCableado()"></div>
-      <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocadoResta('cableadoDeficiente','consTotal','cableadoBueno'); validarCableado()"></div>
+    <!-- PASO 2: Triaje CE -->
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🩺</span> Triaje <span class="tag tag-ce">CE</span></div>
+        <div class="paso-hint">Detalle por cada punto de triaje de Consulta Externa</div>
+        <div id="listaTriajesCE"></div>
+        <button type="button" class="btn-calc btn-secondary" style="margin-top:0;" onclick="agregarTriajeCE()">+ Agregar triaje</button>
+        <div id="resumenTriajeCE" class="resumen-compacto"></div>
+      </div>
     </div>
-    <div id="avisoCableado" class="aviso-coherencia"></div>
+
+    <!-- PASO 3: Consultorios -->
+    <div class="paso">
+      <div class="paso-num">3</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🏥</span> Consultorios</div>
+        <div class="paso-hint">Estado situacional de los consultorios físicos</div>
+
+        <div class="row">
+          <div><label class="hint">N° consultorios totales (físicos)</label><input type="number" id="consTotal" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); sugerirResta('consTotal','consEquip','pcCE'); validarEquipamiento(); validarFuncionales(); validarCableado(); calcularTotalPCs()"></div>
+          <div><label class="hint">N° consultorios equipados con PC</label><input type="number" id="consEquip" min="0" value="0" oninput="sugerir('consEquip','consOperativa'); validarEquipamiento(); sugerirResta('consTotal','consEquip','pcCE'); calcularTotalPCs()"></div>
+        </div>
+        <label class="hint">N° consultorios con PC operativa <span class="hint">(funciona bien, soporta el sistema de gestión — sugerido automáticamente, editable)</span></label>
+        <input type="number" id="consOperativa" min="0" value="0" oninput="marcarTocadoIgual('consOperativa','consEquip'); validarEquipamiento(); calcularTotalPCs()">
+        <div id="avisoEquipamiento" class="aviso-coherencia"></div>
+
+        <label class="hint" style="margin-top:10px;">N° consultorios funcionales <span class="hint">(por turnos: un consultorio físico puede tener más de un consultorio funcional)</span></label>
+        <input type="number" id="consFuncionales" min="0" value="0" oninput="validarFuncionales()">
+        <div id="avisoFuncionales" class="aviso-coherencia"></div>
+
+        <label class="hint" style="margin-top:10px;">Lectoras de DNI electrónico</label>
+        <div class="row">
+          <div><label class="hint">N° lectoras instaladas</label><input type="number" id="lectorasInst" min="0" value="0" oninput="sugerirResta('consTotal','lectorasInst','lectorasReq'); validarLectoras()"></div>
+          <div><label class="hint">N° consultorios que requieren lectora <span class="hint">(sugerido: totales − instaladas)</span></label><input type="number" id="lectorasReq" min="0" value="0" oninput="marcarTocadoResta('lectorasReq','consTotal','lectorasInst'); validarLectoras()"></div>
+        </div>
+        <div id="avisoLectoras" class="aviso-coherencia"></div>
+
+        <label class="hint" style="margin-top:10px;">Cableado de red <span class="hint">(punto activo hasta el consultorio)</span></label>
+        <div class="row">
+          <div><label class="hint">N° consultorios con cableado en buen estado</label><input type="number" id="cableadoBueno" min="0" value="0" oninput="sugerirResta('consTotal','cableadoBueno','cableadoDeficiente'); validarCableado()"></div>
+          <div><label class="hint">N° consultorios con cableado deficiente <span class="hint">(sugerido: totales − buen estado)</span></label><input type="number" id="cableadoDeficiente" min="0" value="0" oninput="marcarTocadoResta('cableadoDeficiente','consTotal','cableadoBueno'); validarCableado()"></div>
+        </div>
+        <div id="avisoCableado" class="aviso-coherencia"></div>
+
+        <label class="hint" style="margin-top:10px;">Consultorio (CE) <span class="hint">(PCs necesarias — sugerido: totales − equipados con PC)</span></label>
+        <input type="number" id="pcCE" min="0" value="0" oninput="marcarTocadoResta('pcCE','consTotal','consEquip'); calcularTotalPCs()">
+      </div>
+    </div>
+
+    <!-- Laboratorio y Diagnóstico por Imágenes: se incorporarán más adelante -->
+    <input type="hidden" id="pcLaboratorio" value="0">
+    <input type="hidden" id="pcImagenes" value="0">
   </div>
 
-  <!-- 3. BRECHA TECNOLÓGICA POR PUNTO DE GENERACIÓN DE FUA -->
+  <!-- 3. EMERGENCIA, HOSPITALIZACIÓN Y OTROS SERVICIOS -->
   <div class="section seccion-bloqueada" id="seccion3">
-    <h2><span class="num">3</span>Brecha tecnológica por punto de generación de FUA</h2>
-    <label class="hint" style="display:block; margin-top:-4px; margin-bottom:14px;">N° de PCs necesarias en cada punto donde se genera el FUA</label>
-    <div class="row">
-      <div><label class="hint">Consulta Externa (CE) <span class="hint">(sugerido: totales − equipados con PC)</span></label><input type="number" id="pcCE" min="0" value="0" oninput="marcarTocadoResta('pcCE','consTotal','consEquip'); calcularTotalPCs()"></div>
-      <div></div>
+    <h2><span class="num">3</span>Emergencia — Diagnóstico de brecha tecnológica</h2>
+
+    <!-- PASO 1: Admisión Emergencia -->
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🪪</span> Admisión <span class="tag tag-emergencia">Emergencia</span></div>
+        <div class="paso-hint">Detalle por cada punto de admisión de Emergencia</div>
+        <div id="listaAdmisionesEmergencia"></div>
+        <button type="button" class="btn-calc btn-secondary" style="margin-top:0;" onclick="agregarAdmisionEmergencia()">+ Agregar admisión</button>
+        <div id="resumenAdmisionEmergencia" class="resumen-compacto"></div>
+      </div>
     </div>
 
-    <label style="margin-top:6px;">Admisión <span class="hint">(detalle por cada punto de admisión de la IPRESS)</span></label>
-    <div id="listaAdmisiones"></div>
-    <button type="button" class="btn-calc btn-secondary" style="margin-top:0; margin-bottom:14px;" onclick="agregarAdmision()">+ Agregar admisión</button>
-    <div class="row">
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">N° admisiones</div><div class="val" id="totAdmisiones" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs actuales</div><div class="val" id="totAdmisionActual" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs necesarias</div><div class="val" id="totAdmisionNecesaria" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
+    <!-- PASO 2: Triaje Emergencia -->
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🩺</span> Triaje <span class="tag tag-emergencia">Emergencia</span></div>
+        <div class="paso-hint">Detalle por cada punto de triaje de Emergencia</div>
+        <div id="listaTriajesEmergencia"></div>
+        <button type="button" class="btn-calc btn-secondary" style="margin-top:0;" onclick="agregarTriajeEmergencia()">+ Agregar triaje</button>
+        <div id="resumenTriajeEmergencia" class="resumen-compacto"></div>
+      </div>
     </div>
 
-    <label style="margin-top:6px;">Triaje <span class="hint">(detalle por cada punto de triaje de la IPRESS)</span></label>
-    <div id="listaTriajes"></div>
-    <button type="button" class="btn-calc btn-secondary" style="margin-top:0; margin-bottom:14px;" onclick="agregarTriaje()">+ Agregar triaje</button>
-    <div class="row">
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">N° triajes</div><div class="val" id="totTriajes" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs actuales</div><div class="val" id="totTriajeActual" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs necesarias</div><div class="val" id="totTriajeNecesaria" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
+    <!-- PASO 3: Puntos de registro Emergencia -->
+    <div class="paso">
+      <div class="paso-num">3</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🚑</span> Puntos de registro</div>
+        <div class="paso-hint">PCs actuales y necesarias en los puntos de registro del área de Emergencia</div>
+        <div class="row">
+          <div><label class="hint">PCs actuales</label><input type="number" id="pcEmergenciaActual" min="0" value="0" oninput="calcularTotalPCs()"></div>
+          <div><label class="hint">PCs necesarias</label><input type="number" id="pcEmergencia" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. HOSPITALIZACIÓN -->
+  <div class="section seccion-bloqueada" id="seccion4">
+    <h2><span class="num">4</span>Hospitalización — Diagnóstico de brecha tecnológica</h2>
+
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🛏️</span> Puntos de registro</div>
+        <div class="paso-hint">PCs actuales y necesarias en los puntos de registro de Hospitalización</div>
+        <div class="row">
+          <div><label class="hint">PCs actuales</label><input type="number" id="pcHospitalizacionActual" min="0" value="0" oninput="calcularTotalPCs()"></div>
+          <div><label class="hint">PCs necesarias</label><input type="number" id="pcHospitalizacion" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. CENTRO OBSTÉTRICO Y QUIRÚRGICO -->
+  <div class="section seccion-bloqueada" id="seccion5">
+    <h2><span class="num">5</span>Centro Obstétrico y Quirúrgico — Diagnóstico de brecha tecnológica</h2>
+
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">🤰</span> Centro Obstétrico</div>
+        <div class="paso-hint">PCs necesarias</div>
+        <input type="number" id="pcObstetrico" min="0" value="0" oninput="calcularTotalPCs()">
+      </div>
     </div>
 
-    <label style="margin-top:6px;">Emergencia</label>
-    <div class="row">
-      <div><label class="hint">PCs actuales</label><input type="number" id="pcEmergenciaActual" min="0" value="0" oninput="calcularTotalPCs()"></div>
-      <div><label class="hint">PCs necesarias</label><input type="number" id="pcEmergencia" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">⚕️</span> Centro Quirúrgico</div>
+        <div class="paso-hint">PCs necesarias</div>
+        <input type="number" id="pcQuirurgico" min="0" value="0" oninput="calcularTotalPCs()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. FARMACIA -->
+  <div class="section seccion-bloqueada" id="seccion6">
+    <h2><span class="num">6</span>Farmacia — Diagnóstico de brecha tecnológica</h2>
+
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-body">
+        <div class="paso-titulo"><span class="paso-icono">💊</span> Farmacia</div>
+        <div class="paso-hint">Detalle por cada farmacia de la IPRESS</div>
+        <div class="hint" style="display:block; margin-top:2px; margin-bottom:10px; padding:10px 12px; background:#f4f8fb; border-left:3px solid var(--azul-inst); border-radius:4px;">
+          <strong>Guía de característica técnica mínima recomendada para PCs de Farmacia:</strong> Procesador Intel Core i3 (recom. i5+), RAM 8 GB (64 bits), disco sólido 500 GB, ancho de banda mínimo 10 Mbps dedicado al módulo, cableado categoría 6/6A o superior, y filtrado/control de navegación que priorice servicios institucionales.
+        </div>
+        <div id="listaFarmacias"></div>
+        <button type="button" class="btn-calc btn-secondary" style="margin-top:0;" onclick="agregarFarmacia()">+ Agregar farmacia</button>
+        <div id="resumenFarmacia" class="resumen-compacto"></div>
+      </div>
     </div>
 
-    <label style="margin-top:6px;">Hospitalización</label>
-    <div class="row">
-      <div><label class="hint">PCs actuales</label><input type="number" id="pcHospitalizacionActual" min="0" value="0" oninput="calcularTotalPCs()"></div>
-      <div><label class="hint">PCs necesarias</label><input type="number" id="pcHospitalizacion" min="0" value="0" oninput="calcularTotalPCs(); validarPCsObligatorias()"></div>
-    </div>
-
-    <div class="row">
-      <div><label class="hint">Centro Obstétrico</label><input type="number" id="pcObstetrico" min="0" value="0" oninput="calcularTotalPCs()"></div>
-      <div><label class="hint">Centro Quirúrgico</label><input type="number" id="pcQuirurgico" min="0" value="0" oninput="calcularTotalPCs()"></div>
-    </div>
-
-    <label style="margin-top:6px;">Farmacia <span class="hint">(detalle por cada farmacia de la IPRESS)</span></label>
-    <div class="hint" style="display:block; margin-top:2px; margin-bottom:10px; padding:10px 12px; background:#f4f8fb; border-left:3px solid var(--azul-inst); border-radius:4px;">
-      <strong>Guía de característica técnica mínima recomendada para PCs de Farmacia:</strong> Procesador Intel Core i3 (recom. i5+), RAM 8 GB (64 bits), disco sólido 500 GB, ancho de banda mínimo 10 Mbps dedicado al módulo, cableado categoría 6/6A o superior, y filtrado/control de navegación que priorice servicios institucionales.
-    </div>
-    <div id="listaFarmacias"></div>
-    <button type="button" class="btn-calc btn-secondary" style="margin-top:0; margin-bottom:14px;" onclick="agregarFarmacia()">+ Agregar farmacia</button>
-    <div class="row">
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">N° farmacias</div><div class="val" id="totFarmacias" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs actuales</div><div class="val" id="totFarmaciaActual" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs necesarias</div><div class="val" id="totFarmaciaNecesaria" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-      <div class="modal-total"><div style="font-size:11px; color:var(--gris); text-transform:uppercase;">PCs que cumplen</div><div class="val" id="totFarmaciaCumple" style="font-size:20px; font-weight:700; color:var(--azul-inst);">0</div></div>
-    </div>
-
-    <div class="row">
-      <div><label class="hint">Laboratorio</label><input type="number" id="pcLaboratorio" min="0" value="0" oninput="calcularTotalPCs()"></div>
-      <div><label class="hint">Diagnóstico por Imágenes</label><input type="number" id="pcImagenes" min="0" value="0" oninput="calcularTotalPCs()"></div>
-    </div>
     <div id="avisoPCsObligatorias" class="aviso-coherencia"></div>
     <div class="modal-total" style="margin-top:10px;">
-      <div style="font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.4px;">Total PCs necesarias</div>
+      <div style="font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.4px;">Total PCs necesarias (todos los puntos)</div>
       <div class="val" id="totalPCsNecesarias" style="font-size:26px; font-weight:700; color:var(--azul-inst);">0</div>
     </div>
   </div>
 
-  <!-- 4. SERVIDOR -->
-  <div class="section seccion-bloqueada" id="seccion4">
-    <h2><span class="num">4</span>Servidor</h2>
+  <!-- 7. SERVIDOR -->
+  <div class="section seccion-bloqueada" id="seccion7">
+    <h2><span class="num">7</span>Servidor</h2>
     <label>¿La IPRESS cuenta con servidor?</label>
     <div class="radio-group">
       <label><input type="radio" name="servidor" value="si" onchange="toggle('condServidor',true)"> Sí</label>
@@ -327,8 +433,8 @@
   </div>
 
   <!-- 4. SISTEMA DE GESTIÓN HOSPITALARIA -->
-  <div class="section seccion-bloqueada" id="seccion5">
-    <h2><span class="num">5</span>Sistema de gestión hospitalaria</h2>
+  <div class="section seccion-bloqueada" id="seccion8">
+    <h2><span class="num">8</span>Sistema de gestión hospitalaria</h2>
     <label>¿Cuenta con sistema de gestión hospitalaria?</label>
     <div class="radio-group">
       <label><input type="radio" name="sgh" value="si" onchange="toggleSGH(true)"> Sí</label>
@@ -394,8 +500,8 @@
   </div>
 
   <!-- 5. INTEROPERABILIDAD (WS) -->
-  <div class="section seccion-bloqueada" id="seccion6">
-    <h2><span class="num">6</span>Interoperabilidad (Web Services)</h2>
+  <div class="section seccion-bloqueada" id="seccion9">
+    <h2><span class="num">9</span>Interoperabilidad (Web Services)</h2>
     <p style="font-size:12px; color:var(--gris); margin:-4px 0 14px; line-height:1.5;">
       Distinción importante: <b>Automática</b> = el sistema se conecta solo, sin intervención manual.
       <b>Manual</b> = el personal ingresa a un portal web y digita/consulta a mano.
@@ -431,8 +537,8 @@
   </div>
 
   <!-- 6. CONECTIVIDAD E INFRAESTRUCTURA -->
-  <div class="section seccion-bloqueada" id="seccion7">
-    <h2><span class="num">7</span>Conectividad e infraestructura</h2>
+  <div class="section seccion-bloqueada" id="seccion10">
+    <h2><span class="num">10</span>Conectividad e infraestructura</h2>
     <div class="row">
       <div><label>¿Cuenta con internet?</label>
         <select id="tieneInternet"><option value="">Seleccione...</option><option>Sí</option><option>No</option></select>
@@ -452,8 +558,8 @@
   </div>
 
   <!-- 7. RECURSO HUMANO Y PLANIFICACIÓN -->
-  <div class="section seccion-bloqueada" id="seccion8">
-    <h2><span class="num">8</span>Recurso humano y planificación</h2>
+  <div class="section seccion-bloqueada" id="seccion11">
+    <h2><span class="num">11</span>Recurso humano y planificación</h2>
     <div class="row">
       <div><label>N° personal TI Nombrado/Contratado</label><input type="number" id="personalTiNombrado" min="0" value="0"></div>
       <div><label>N° personal TI Locador de servicios</label><input type="number" id="personalTiLocador" min="0" value="0"></div>
@@ -577,11 +683,9 @@ async function seleccionarIPRESS(codigo){
 
   window._registroBloqueado = false;
   window._farmacias = [];
-  window._triajes = [];
-  window._admisiones = [];
+  window._detalle = { admisionCE: [], triajeCE: [], admisionEmergencia: [], triajeEmergencia: [] };
   renderFarmacias();
-  renderTriajes();
-  renderAdmisiones();
+  renderTodosLosDetalles();
 
   if(!API_URL.includes('PEGA_AQUI')){
     try{
@@ -632,7 +736,7 @@ async function seleccionarIPRESS(codigo){
 }
 
 function desbloquearSecciones(){
-  ['seccion2','seccion3','seccion4','seccion5','seccion6','seccion7','seccion8'].forEach(id => {
+  ['seccion2','seccion3','seccion4','seccion5','seccion6','seccion7','seccion8','seccion9','seccion10','seccion11'].forEach(id => {
     document.getElementById(id).classList.remove('seccion-bloqueada');
   });
 }
@@ -655,17 +759,18 @@ function precargarDatos(r){
   setVal('cableadoDeficiente', r.CONSULTORIOS_CABLEADO_DEFICIENTE);
   marcarTocado('cableadoDeficiente');
   try{
-    window._admisiones = r.ADMISION_DETALLE ? JSON.parse(r.ADMISION_DETALLE) : [];
-  }catch(e){
-    window._admisiones = [];
-  }
-  renderAdmisiones();
+    window._detalle.admisionCE = r.ADMISION_CE_DETALLE ? JSON.parse(r.ADMISION_CE_DETALLE) : [];
+  }catch(e){ window._detalle.admisionCE = []; }
   try{
-    window._triajes = r.TRIAJE_DETALLE ? JSON.parse(r.TRIAJE_DETALLE) : [];
-  }catch(e){
-    window._triajes = [];
-  }
-  renderTriajes();
+    window._detalle.triajeCE = r.TRIAJE_CE_DETALLE ? JSON.parse(r.TRIAJE_CE_DETALLE) : [];
+  }catch(e){ window._detalle.triajeCE = []; }
+  try{
+    window._detalle.admisionEmergencia = r.ADMISION_EMERGENCIA_DETALLE ? JSON.parse(r.ADMISION_EMERGENCIA_DETALLE) : [];
+  }catch(e){ window._detalle.admisionEmergencia = []; }
+  try{
+    window._detalle.triajeEmergencia = r.TRIAJE_EMERGENCIA_DETALLE ? JSON.parse(r.TRIAJE_EMERGENCIA_DETALLE) : [];
+  }catch(e){ window._detalle.triajeEmergencia = []; }
+  renderTodosLosDetalles();
   setVal('pcCE', r.PC_NECESARIA_CE);
   marcarTocado('pcCE');
   setVal('pcEmergenciaActual', r.PC_EMERGENCIA_ACTUAL);
@@ -924,102 +1029,80 @@ function calcularTotalPCs(){
   const ids = ['pcCE','pcEmergencia','pcHospitalizacion','pcObstetrico','pcQuirurgico','pcLaboratorio','pcImagenes'];
   let total = ids.reduce((sum, id) => sum + (parseFloat(document.getElementById(id).value) || 0), 0);
   total += window._farmacias.reduce((sum, f) => sum + (parseFloat(f.necesaria) || 0), 0);
-  total += window._triajes.reduce((sum, t) => sum + (parseFloat(t.necesaria) || 0), 0);
-  total += window._admisiones.reduce((sum, a) => sum + (parseFloat(a.necesaria) || 0), 0);
+  Object.keys(GRUPOS_DETALLE).forEach(g => {
+    total += window._detalle[g].reduce((sum, p) => sum + (parseFloat(p.necesaria) || 0), 0);
+  });
   document.getElementById('totalPCsNecesarias').textContent = total;
 }
 
-// --- Admisión (detalle por punto) ---
-window._admisiones = [];
+// --- Admisión y Triaje por punto (CE y Emergencia) ---
+// Fábrica genérica: evita duplicar 4 veces el mismo bloque de funciones.
+const GRUPOS_DETALLE = {
+  admisionCE: { lista: 'listaAdmisionesCE', resumen: 'resumenAdmisionCE', label: 'de la admisión', vacio: 'Sin puntos de admisión registrados. Use "+ Agregar admisión".', placeholder: 'Ej: Admisión Central' },
+  triajeCE: { lista: 'listaTriajesCE', resumen: 'resumenTriajeCE', label: 'del triaje', vacio: 'Sin puntos de triaje registrados. Use "+ Agregar triaje".', placeholder: 'Ej: Triaje de Consulta Externa' },
+  admisionEmergencia: { lista: 'listaAdmisionesEmergencia', resumen: 'resumenAdmisionEmergencia', label: 'de la admisión', vacio: 'Sin puntos de admisión registrados. Use "+ Agregar admisión".', placeholder: 'Ej: Admisión de Emergencia' },
+  triajeEmergencia: { lista: 'listaTriajesEmergencia', resumen: 'resumenTriajeEmergencia', label: 'del triaje', vacio: 'Sin puntos de triaje registrados. Use "+ Agregar triaje".', placeholder: 'Ej: Triaje de Emergencia' },
+};
+window._detalle = { admisionCE: [], triajeCE: [], admisionEmergencia: [], triajeEmergencia: [] };
 
-function agregarAdmision(){
-  window._admisiones.push({ nombre: '', actual: 0, necesaria: 0 });
-  renderAdmisiones();
+function agregarPuntoDetalle(grupo){
+  window._detalle[grupo].push({ nombre: '', actual: 0, necesaria: 0 });
+  renderGrupoDetalle(grupo);
 }
-function eliminarAdmision(idx){
-  window._admisiones.splice(idx, 1);
-  renderAdmisiones();
+function eliminarPuntoDetalle(grupo, idx){
+  window._detalle[grupo].splice(idx, 1);
+  renderGrupoDetalle(grupo);
 }
-function actualizarAdmision(idx, campo, valor){
+function actualizarPuntoDetalle(grupo, idx, campo, valor){
   if(campo === 'nombre'){
-    window._admisiones[idx].nombre = valor;
+    window._detalle[grupo][idx].nombre = valor;
   } else {
-    window._admisiones[idx][campo] = parseFloat(valor) || 0;
+    window._detalle[grupo][idx][campo] = parseFloat(valor) || 0;
   }
-  actualizarTotalesAdmision();
+  actualizarTotalesDetalle(grupo);
   calcularTotalPCs();
 }
-function renderAdmisiones(){
-  const cont = document.getElementById('listaAdmisiones');
-  if(window._admisiones.length === 0){
-    cont.innerHTML = '<div class="hint" style="margin-bottom:10px;">Sin puntos de admisión registrados. Use "+ Agregar admisión".</div>';
+function renderGrupoDetalle(grupo){
+  const cfg = GRUPOS_DETALLE[grupo];
+  const cont = document.getElementById(cfg.lista);
+  const puntos = window._detalle[grupo];
+  if(puntos.length === 0){
+    cont.innerHTML = '<div class="hint" style="margin-bottom:10px;">' + cfg.vacio + '</div>';
   } else {
-    cont.innerHTML = window._admisiones.map((a, i) => `
+    cont.innerHTML = puntos.map((p, i) => `
       <div style="border:1px solid var(--borde); border-radius:8px; padding:12px; margin-bottom:10px; background:#fafcfd;">
         <div class="row" style="margin-bottom:8px;">
-          <div><label class="hint">Nombre / ubicación de la admisión</label><input type="text" value="${a.nombre || ''}" placeholder="Ej: Admisión Central, Admisión de Emergencia" oninput="actualizarAdmision(${i},'nombre',this.value)"></div>
-          <div style="flex:0 0 auto; display:flex; align-items:flex-end;"><button type="button" class="btn-calc btn-secondary" style="margin-top:0; padding:9px 14px;" onclick="eliminarAdmision(${i})">🗑 Quitar</button></div>
+          <div><label class="hint">Nombre / ubicación ${cfg.label}</label><input type="text" value="${p.nombre || ''}" placeholder="${cfg.placeholder}" oninput="actualizarPuntoDetalle('${grupo}',${i},'nombre',this.value)"></div>
+          <div style="flex:0 0 auto; display:flex; align-items:flex-end;"><button type="button" class="btn-calc btn-secondary" style="margin-top:0; padding:9px 14px;" onclick="eliminarPuntoDetalle('${grupo}',${i})">🗑 Quitar</button></div>
         </div>
         <div class="row">
-          <div><label class="hint">PCs actuales</label><input type="number" min="0" value="${a.actual || 0}" oninput="actualizarAdmision(${i},'actual',this.value)"></div>
-          <div><label class="hint">PCs necesarias</label><input type="number" min="0" value="${a.necesaria || 0}" oninput="actualizarAdmision(${i},'necesaria',this.value)"></div>
+          <div><label class="hint">PCs actuales</label><input type="number" min="0" value="${p.actual || 0}" oninput="actualizarPuntoDetalle('${grupo}',${i},'actual',this.value)"></div>
+          <div><label class="hint">PCs necesarias</label><input type="number" min="0" value="${p.necesaria || 0}" oninput="actualizarPuntoDetalle('${grupo}',${i},'necesaria',this.value)"></div>
         </div>
       </div>
     `).join('');
   }
-  actualizarTotalesAdmision();
+  actualizarTotalesDetalle(grupo);
 }
-function actualizarTotalesAdmision(){
-  document.getElementById('totAdmisiones').textContent = window._admisiones.length;
-  document.getElementById('totAdmisionActual').textContent = window._admisiones.reduce((s,a)=>s+(parseFloat(a.actual)||0),0);
-  document.getElementById('totAdmisionNecesaria').textContent = window._admisiones.reduce((s,a)=>s+(parseFloat(a.necesaria)||0),0);
+function actualizarTotalesDetalle(grupo){
+  const cfg = GRUPOS_DETALLE[grupo];
+  const puntos = window._detalle[grupo];
+  const nActual = puntos.reduce((s,p)=>s+(parseFloat(p.actual)||0),0);
+  const nNecesaria = puntos.reduce((s,p)=>s+(parseFloat(p.necesaria)||0),0);
+  document.getElementById(cfg.resumen).innerHTML =
+    puntos.length === 0 ? '' :
+    `<b>${puntos.length}</b> punto${puntos.length === 1 ? '' : 's'} · <b>${nActual}</b> PCs actuales · <b>${nNecesaria}</b> PCs necesarias`;
+}
+function renderTodosLosDetalles(){
+  Object.keys(GRUPOS_DETALLE).forEach(renderGrupoDetalle);
 }
 
-// --- Triaje (detalle por punto) ---
-window._triajes = [];
+// Atajos usados por los botones "+ Agregar..." de cada bloque del HTML
+function agregarAdmisionCE(){ agregarPuntoDetalle('admisionCE'); }
+function agregarTriajeCE(){ agregarPuntoDetalle('triajeCE'); }
+function agregarAdmisionEmergencia(){ agregarPuntoDetalle('admisionEmergencia'); }
+function agregarTriajeEmergencia(){ agregarPuntoDetalle('triajeEmergencia'); }
 
-function agregarTriaje(){
-  window._triajes.push({ nombre: '', actual: 0, necesaria: 0 });
-  renderTriajes();
-}
-function eliminarTriaje(idx){
-  window._triajes.splice(idx, 1);
-  renderTriajes();
-}
-function actualizarTriaje(idx, campo, valor){
-  if(campo === 'nombre'){
-    window._triajes[idx].nombre = valor;
-  } else {
-    window._triajes[idx][campo] = parseFloat(valor) || 0;
-  }
-  actualizarTotalesTriaje();
-  calcularTotalPCs();
-}
-function renderTriajes(){
-  const cont = document.getElementById('listaTriajes');
-  if(window._triajes.length === 0){
-    cont.innerHTML = '<div class="hint" style="margin-bottom:10px;">Sin puntos de triaje registrados. Use "+ Agregar triaje".</div>';
-  } else {
-    cont.innerHTML = window._triajes.map((t, i) => `
-      <div style="border:1px solid var(--borde); border-radius:8px; padding:12px; margin-bottom:10px; background:#fafcfd;">
-        <div class="row" style="margin-bottom:8px;">
-          <div><label class="hint">Nombre / ubicación del triaje</label><input type="text" value="${t.nombre || ''}" placeholder="Ej: Triaje de Consulta Externa, Triaje de Emergencia" oninput="actualizarTriaje(${i},'nombre',this.value)"></div>
-          <div style="flex:0 0 auto; display:flex; align-items:flex-end;"><button type="button" class="btn-calc btn-secondary" style="margin-top:0; padding:9px 14px;" onclick="eliminarTriaje(${i})">🗑 Quitar</button></div>
-        </div>
-        <div class="row">
-          <div><label class="hint">PCs actuales</label><input type="number" min="0" value="${t.actual || 0}" oninput="actualizarTriaje(${i},'actual',this.value)"></div>
-          <div><label class="hint">PCs necesarias</label><input type="number" min="0" value="${t.necesaria || 0}" oninput="actualizarTriaje(${i},'necesaria',this.value)"></div>
-        </div>
-      </div>
-    `).join('');
-  }
-  actualizarTotalesTriaje();
-}
-function actualizarTotalesTriaje(){
-  document.getElementById('totTriajes').textContent = window._triajes.length;
-  document.getElementById('totTriajeActual').textContent = window._triajes.reduce((s,t)=>s+(parseFloat(t.actual)||0),0);
-  document.getElementById('totTriajeNecesaria').textContent = window._triajes.reduce((s,t)=>s+(parseFloat(t.necesaria)||0),0);
-}
 
 // --- Farmacias (detalle por punto) ---
 window._farmacias = [];
@@ -1063,10 +1146,13 @@ function renderFarmacias(){
   actualizarTotalesFarmacia();
 }
 function actualizarTotalesFarmacia(){
-  document.getElementById('totFarmacias').textContent = window._farmacias.length;
-  document.getElementById('totFarmaciaActual').textContent = window._farmacias.reduce((s,f)=>s+(parseFloat(f.actual)||0),0);
-  document.getElementById('totFarmaciaNecesaria').textContent = window._farmacias.reduce((s,f)=>s+(parseFloat(f.necesaria)||0),0);
-  document.getElementById('totFarmaciaCumple').textContent = window._farmacias.reduce((s,f)=>s+(parseFloat(f.cumple)||0),0);
+  const n = window._farmacias.length;
+  const nActual = window._farmacias.reduce((s,f)=>s+(parseFloat(f.actual)||0),0);
+  const nNecesaria = window._farmacias.reduce((s,f)=>s+(parseFloat(f.necesaria)||0),0);
+  const nCumple = window._farmacias.reduce((s,f)=>s+(parseFloat(f.cumple)||0),0);
+  document.getElementById('resumenFarmacia').innerHTML =
+    n === 0 ? '' :
+    `<b>${n}</b> farmacia${n === 1 ? '' : 's'} · <b>${nActual}</b> PCs actuales · <b>${nNecesaria}</b> PCs necesarias · <b>${nCumple}</b> cumplen características`;
 }
 
 function toggle(id, show){
@@ -1146,14 +1232,22 @@ function recopilarDatos(){
     CONSULTORIOS_FUNCIONALES: consFuncionales,
     LECTORAS_INSTALADAS: lectorasInst, LECTORAS_REQUERIDAS: lectorasReq,
     CONSULTORIOS_CABLEADO_BUEN_ESTADO: cableadoBueno, CONSULTORIOS_CABLEADO_DEFICIENTE: cableadoDeficiente,
-    NUM_ADMISIONES: window._admisiones.length,
-    PC_ADMISION_ACTUAL: window._admisiones.reduce((s,a)=>s+(parseFloat(a.actual)||0),0),
-    PC_NECESARIA_ADMISION: window._admisiones.reduce((s,a)=>s+(parseFloat(a.necesaria)||0),0),
-    ADMISION_DETALLE: JSON.stringify(window._admisiones),
-    NUM_TRIAJES: window._triajes.length,
-    PC_TRIAJE_ACTUAL: window._triajes.reduce((s,t)=>s+(parseFloat(t.actual)||0),0),
-    PC_NECESARIA_TRIAJE: window._triajes.reduce((s,t)=>s+(parseFloat(t.necesaria)||0),0),
-    TRIAJE_DETALLE: JSON.stringify(window._triajes),
+    NUM_ADMISION_CE: window._detalle.admisionCE.length,
+    PC_ADMISION_CE_ACTUAL: window._detalle.admisionCE.reduce((s,a)=>s+(parseFloat(a.actual)||0),0),
+    PC_NECESARIA_ADMISION_CE: window._detalle.admisionCE.reduce((s,a)=>s+(parseFloat(a.necesaria)||0),0),
+    ADMISION_CE_DETALLE: JSON.stringify(window._detalle.admisionCE),
+    NUM_TRIAJE_CE: window._detalle.triajeCE.length,
+    PC_TRIAJE_CE_ACTUAL: window._detalle.triajeCE.reduce((s,t)=>s+(parseFloat(t.actual)||0),0),
+    PC_NECESARIA_TRIAJE_CE: window._detalle.triajeCE.reduce((s,t)=>s+(parseFloat(t.necesaria)||0),0),
+    TRIAJE_CE_DETALLE: JSON.stringify(window._detalle.triajeCE),
+    NUM_ADMISION_EMERGENCIA: window._detalle.admisionEmergencia.length,
+    PC_ADMISION_EMERGENCIA_ACTUAL: window._detalle.admisionEmergencia.reduce((s,a)=>s+(parseFloat(a.actual)||0),0),
+    PC_NECESARIA_ADMISION_EMERGENCIA: window._detalle.admisionEmergencia.reduce((s,a)=>s+(parseFloat(a.necesaria)||0),0),
+    ADMISION_EMERGENCIA_DETALLE: JSON.stringify(window._detalle.admisionEmergencia),
+    NUM_TRIAJE_EMERGENCIA: window._detalle.triajeEmergencia.length,
+    PC_TRIAJE_EMERGENCIA_ACTUAL: window._detalle.triajeEmergencia.reduce((s,t)=>s+(parseFloat(t.actual)||0),0),
+    PC_NECESARIA_TRIAJE_EMERGENCIA: window._detalle.triajeEmergencia.reduce((s,t)=>s+(parseFloat(t.necesaria)||0),0),
+    TRIAJE_EMERGENCIA_DETALLE: JSON.stringify(window._detalle.triajeEmergencia),
     PC_NECESARIA_CE: parseFloat(document.getElementById('pcCE').value) || 0,
     PC_EMERGENCIA_ACTUAL: parseFloat(document.getElementById('pcEmergenciaActual').value) || 0,
     PC_NECESARIA_EMERGENCIA: parseFloat(document.getElementById('pcEmergencia').value) || 0,
@@ -1323,8 +1417,7 @@ function cerrarResumen(){
 }
 
 renderFarmacias();
-renderTriajes();
-renderAdmisiones();
+renderTodosLosDetalles();
 
 </script>
 </body>
