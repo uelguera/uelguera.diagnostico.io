@@ -301,6 +301,12 @@ function actualizarCampo(idx, campo, valor){
     }
     return;
   }
+  if(campo === 'cantPCs' || campo === 'cantPCsFaltantes'){
+    // Estos campos no afectan el cumplimiento de la tarjeta, solo el resumen general:
+    // evita reconstruir toda la lista (y perder el foco) mientras se escribe.
+    actualizarResumenGeneral();
+    return;
+  }
   render();
 }
 function actualizarPregunta(idx, qid, valor){
