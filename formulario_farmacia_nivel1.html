@@ -509,8 +509,9 @@ async function guardarRegistro(){
     });
     const json = await res.json();
     if(json.status === 'ok'){
-      msg.textContent = '✔ Guardado: ' + json.filas_guardadas + ' farmacia(s) registrada(s).';
+      msg.textContent = '✔ Guardado: ' + json.farmacias_guardadas + ' farmacia(s) registrada(s).' + (json.aviso ? ' ' + json.aviso : '');
       msg.style.color = 'var(--verde-ok)';
+      limpiarFormulario();
     } else {
       msg.textContent = 'Error al guardar: ' + (json.message || json.error || 'desconocido');
       msg.style.color = 'var(--rojo-crit)';
@@ -519,6 +520,26 @@ async function guardarRegistro(){
     msg.textContent = 'Error de conexión: ' + err.message;
     msg.style.color = 'var(--rojo-crit)';
   }
+}
+
+function limpiarFormulario(){
+  // Identificación
+  document.getElementById('buscarIpress').value = '';
+  document.getElementById('reniIpress').value = '';
+  document.getElementById('ipress').value = '';
+  document.getElementById('categoria').value = '';
+  document.getElementById('departamento').value = '';
+  document.getElementById('provincia').value = '';
+  document.getElementById('distrito').value = '';
+  document.getElementById('disa').value = '';
+  document.getElementById('red').value = '';
+  document.getElementById('microrred').value = '';
+  document.getElementById('unidadEjecutora').value = '';
+  document.getElementById('responsable').value = '';
+
+  // Farmacias
+  window._farmacias = [];
+  agregarFarmacia();
 }
 
 // Estado inicial: una farmacia de ejemplo para que se entienda el flujo
