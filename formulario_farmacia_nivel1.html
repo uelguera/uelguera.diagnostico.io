@@ -171,7 +171,7 @@
     <h2>💊 Farmacias</h2>
     <p class="subhint">Agrega una tarjeta por cada farmacia de la IPRESS (ej: Farmacia Central, Farmacia de Emergencia).</p>
     <div id="listaFarmacias"></div>
-    <button type="button" class="btn-agregar" onclick="agregarFarmacia()">+ Agregar farmacia</button>
+    <button type="button" class="btn-agregar" id="btnAgregarFarmacia" onclick="agregarFarmacia()">+ Agregar farmacia</button>
   </div>
 
   <!-- RESUMEN GENERAL -->
@@ -276,7 +276,13 @@ function nuevaFarmacia(){
   return f;
 }
 
+const MAX_FARMACIAS = 5;
+
 function agregarFarmacia(){
+  if(window._farmacias.length >= MAX_FARMACIAS){
+    alert('Este formulario admite un máximo de ' + MAX_FARMACIAS + ' farmacias por establecimiento.');
+    return;
+  }
   window._farmacias.push(nuevaFarmacia());
   render();
 }
@@ -414,6 +420,19 @@ function render(){
         </div>
       </div>`;
     }).join('');
+  }
+
+  const btnAgregar = document.getElementById('btnAgregarFarmacia');
+  if(window._farmacias.length >= MAX_FARMACIAS){
+    btnAgregar.disabled = true;
+    btnAgregar.textContent = `Máximo ${MAX_FARMACIAS} farmacias alcanzado`;
+    btnAgregar.style.opacity = '0.6';
+    btnAgregar.style.cursor = 'not-allowed';
+  } else {
+    btnAgregar.disabled = false;
+    btnAgregar.textContent = `+ Agregar farmacia (${window._farmacias.length}/${MAX_FARMACIAS})`;
+    btnAgregar.style.opacity = '1';
+    btnAgregar.style.cursor = 'pointer';
   }
 
   actualizarResumenGeneral();
