@@ -89,7 +89,7 @@
   .autocomplete-list{
     position:absolute; top:100%; left:0; right:0; background:#fff;
     border:1px solid var(--borde); border-top:none; border-radius:0 0 6px 6px;
-    max-height:220px; overflow-y:auto; z-index:20; display:none;
+    max-height:400px; overflow-y:auto; z-index:20; display:none;
     box-shadow:0 6px 14px rgba(0,0,0,.08);
   }
   .autocomplete-list.show{display:block;}
@@ -105,15 +105,13 @@
   /* --- Resumen general --- */
   .resumen-general{background:var(--azul-inst); color:#fff; border-radius:10px; padding:22px 24px;}
   .resumen-general h2{color:#fff; font-size:14.5px; margin:0 0 16px;}
-  .resumen-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .resumen-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
   .resumen-item{background:rgba(255,255,255,.08); border-radius:8px; padding:14px;}
   .resumen-item .num{font-size:24px; font-weight:700;}
   .resumen-item .lbl{font-size:11px; opacity:.75; text-transform:uppercase; letter-spacing:.3px; margin-top:2px;}
 
   .btn-final{width:100%; background:var(--verde-ok); color:#fff; border:none; padding:14px; font-size:14.5px; font-weight:700; border-radius:8px; cursor:pointer; margin-top:22px;}
   .btn-final:hover{opacity:.92;}
-
-  pre#jsonOut{background:#0B3D5C; color:#d8e8ee; padding:16px; border-radius:8px; font-size:11.5px; overflow-x:auto; margin-top:14px; display:none; max-height:300px;}
 
   @media (max-width:520px){
     .resumen-grid{grid-template-columns:repeat(2,1fr);}
@@ -182,12 +180,11 @@
     <div class="resumen-grid">
       <div class="resumen-item"><div class="num" id="resNumFarmacias">0</div><div class="lbl">Farmacias</div></div>
       <div class="resumen-item"><div class="num" id="resNumPCs">0</div><div class="lbl">Computadoras</div></div>
+      <div class="resumen-item"><div class="num" id="resNumPCsFaltantes">0</div><div class="lbl">PCs faltantes</div></div>
       <div class="resumen-item"><div class="num" id="resCumplimiento">—</div><div class="lbl">Cumplimiento promedio</div></div>
     </div>
-    <button type="button" class="btn-final" style="background:#fff; color:var(--azul-inst);" onclick="mostrarJSON()">Ver datos recopilados (JSON)</button>
     <button type="button" class="btn-final" onclick="guardarRegistro()">💾 Guardar registro</button>
     <div id="guardarMsg" style="text-align:center; font-size:12.5px; margin-top:10px; min-height:16px;"></div>
-    <pre id="jsonOut"></pre>
   </div>
 
 </div>
@@ -222,13 +219,14 @@ function buscarIPRESS(valor){
     lista.innerHTML = '';
     return;
   }
-  const resultados = BASE_IPRESS.filter(item =>
+  const coincidencias = BASE_IPRESS.filter(item =>
     item.r.includes(q) ||
     item.n.toLowerCase().includes(q) ||
     (item.dep && item.dep.toLowerCase().includes(q)) ||
     (item.prov && item.prov.toLowerCase().includes(q)) ||
     (item.dist && item.dist.toLowerCase().includes(q))
-  ).slice(0, 15);
+  );
+  const resultados = coincidencias.slice(0, 50);
 
   if(resultados.length === 0){
     lista.innerHTML = '<div class="autocomplete-empty">Sin coincidencias. Puede ingresar los datos manualmente.</div>';
@@ -238,6 +236,9 @@ function buscarIPRESS(valor){
         <span class="code">${item.r}</span>${item.n} <span style="color:var(--gris); font-size:11.5px;">(${item.c || 's/c'})</span><span class="region">${item.dep}</span>
       </div>`
     ).join('');
+    if(coincidencias.length > resultados.length){
+      lista.innerHTML += `<div class="autocomplete-empty">Mostrando ${resultados.length} de ${coincidencias.length} coincidencias. Escriba más letras para acotar la búsqueda.</div>`;
+    }
   }
   lista.classList.add('show');
 }
@@ -269,7 +270,7 @@ document.addEventListener('click', function(e){
 window._farmacias = [];
 
 function nuevaFarmacia(){
-  const f = { nombre: '', cantPCs: 0, procesador: '', cableado: '', conexionEstable: null };
+  const f = { nombre: '', cantPCs: 0, cantPCsFaltantes: 0, procesador: '', cableado: '', conexionEstable: null };
   PREGUNTAS_SN.forEach(p => f[p.id] = null); // null = sin responder, true = Sí, false = No
   return f;
 }
@@ -284,6 +285,15 @@ function eliminarFarmacia(idx){
 }
 function actualizarCampo(idx, campo, valor){
   window._farmacias[idx][campo] = valor;
+  if(campo === 'nombre'){
+    // Evita reconstruir toda la tarjeta (y perder el foco/cursor) mientras se escribe:
+    // solo actualiza el texto del título directamente.
+    const titulo = document.querySelector(`.farmacia-card[data-idx="${idx}"] .farmacia-titulo`);
+    if(titulo){
+      titulo.textContent = '💊 ' + (valor && valor.trim() ? valor : 'Farmacia ' + (idx + 1));
+    }
+    return;
+  }
   render();
 }
 function actualizarPregunta(idx, qid, valor){
@@ -361,7 +371,7 @@ function render(){
       });
 
       return `
-      <div class="farmacia-card">
+      <div class="farmacia-card" data-idx="${i}">
         <div class="farmacia-card-head">
           <div class="farmacia-titulo">💊 ${f.nombre && f.nombre.trim() ? f.nombre : 'Farmacia ' + (i + 1)}</div>
           <button type="button" class="btn-quitar" onclick="eliminarFarmacia(${i})">🗑 Quitar</button>
@@ -370,7 +380,11 @@ function render(){
         <div class="subgrupo-titulo" style="margin-top:6px;">Datos generales</div>
         <div class="row">
           <div><label>Nombre de la farmacia</label><input type="text" value="${f.nombre || ''}" placeholder="Ej: Principal, Secundaria" oninput="actualizarCampo(${i},'nombre',this.value)"></div>
-          <div><label>Cantidad de computadoras</label><input type="number" min="0" value="${f.cantPCs || 0}" oninput="actualizarCampo(${i},'cantPCs',parseFloat(this.value)||0)"></div>
+          <div><label>Cantidad de computadoras (actual)</label><input type="number" min="0" value="${f.cantPCs || 0}" oninput="actualizarCampo(${i},'cantPCs',parseFloat(this.value)||0)"></div>
+        </div>
+        <div class="row">
+          <div><label>Cantidad de computadoras (faltante)</label><input type="number" min="0" value="${f.cantPCsFaltantes || 0}" oninput="actualizarCampo(${i},'cantPCsFaltantes',parseFloat(this.value)||0)"></div>
+          <div></div>
         </div>
         <label>¿Qué tipo de procesador tiene la PC principal de la farmacia?</label>
         <select onchange="actualizarCampo(${i},'procesador',this.value)">
@@ -408,6 +422,7 @@ function actualizarResumenGeneral(){
   const n = window._farmacias.length;
   document.getElementById('resNumFarmacias').textContent = n;
   document.getElementById('resNumPCs').textContent = window._farmacias.reduce((s,f) => s + (parseFloat(f.cantPCs) || 0), 0);
+  document.getElementById('resNumPCsFaltantes').textContent = window._farmacias.reduce((s,f) => s + (parseFloat(f.cantPCsFaltantes) || 0), 0);
 
   if(n === 0){
     document.getElementById('resCumplimiento').textContent = '—';
@@ -419,17 +434,6 @@ function actualizarResumenGeneral(){
     const promedio = Math.round(porcentajes.reduce((a,b) => a+b, 0) / n);
     document.getElementById('resCumplimiento').textContent = promedio + '%';
   }
-
-  // Si el bloque de JSON ya estaba visible, lo refrescamos en vivo
-  const pre = document.getElementById('jsonOut');
-  if(pre.style.display === 'block') mostrarJSON();
-}
-
-function mostrarJSON(){
-  const data = construirPayload();
-  const pre = document.getElementById('jsonOut');
-  pre.textContent = JSON.stringify(data, null, 2);
-  pre.style.display = 'block';
 }
 
 function construirPayload(){
