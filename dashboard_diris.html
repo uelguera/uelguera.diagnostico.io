@@ -62,6 +62,17 @@
   }
   .sin-resultados{padding:24px; text-align:center; color:var(--gris); font-size:13px;}
   .contador-resultados{font-size:12.5px; color:var(--gris); margin-bottom:8px;}
+
+  .panel-ranking{background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:20px 22px; margin-bottom:20px;}
+  .panel-ranking h2{font-size:15px; margin:0 0 4px; color:var(--azul-inst);}
+  .panel-ranking .sub{font-size:12px; color:var(--gris); margin:0 0 14px;}
+  .fila-brecha{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #f0f0f0;}
+  .fila-brecha:last-child{border-bottom:none;}
+  .fila-brecha .num{font-size:12.5px; color:var(--gris); width:18px; flex:0 0 auto;}
+  .fila-brecha .texto{flex:1; font-size:13px; min-width:0;}
+  .fila-brecha .pct-brecha{font-size:13px; font-weight:700; color:var(--rojo-crit); width:70px; text-align:right; flex:0 0 auto;}
+  .fila-brecha .barra-mini{height:5px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:4px;}
+  .fila-brecha .barra-mini-fill{height:100%; background:var(--rojo-crit); border-radius:3px;}
 </style>
 </head>
 <body>
@@ -86,6 +97,12 @@
     <div class="grid-diris" id="gridDiris"></div>
 
     <div class="resumen-total" id="resumenTotal"></div>
+
+    <div class="panel-ranking">
+      <h2>📉 Brechas más comunes</h2>
+      <p class="sub">De las farmacias registradas, porcentaje que NO cumple cada característica (mayor a menor).</p>
+      <div id="listaBrechas"></div>
+    </div>
 
     <div class="panel-tabla">
       <h2>IPRESS pendientes de registro</h2>
@@ -128,6 +145,7 @@ const DIRIS_LABELS = {
 };
 
 let renipressRegistrados = new Set();
+let registrosCompletos = [];
 
 async function cargarDatos(){
   const estado = document.getElementById('estadoCarga');
@@ -140,7 +158,10 @@ async function cargarDatos(){
     const res = await fetch(API_URL + '?action=list');
     const json = await res.json();
     if(json.status !== 'ok') throw new Error(json.message || 'Respuesta inválida del servidor');
-    renipressRegistrados = new Set(json.records.map(r => String(r.RENIPRESS).trim()));
+    registrosCompletos = json.records;
+    renipressRegistrados = new Set(
+      registrosCompletos.filter(tieneInformacionFarmacia).map(r => String(r.RENIPRESS).trim())
+    );
     renderDashboard();
     document.getElementById('estadoCarga').style.display = 'none';
     document.getElementById('contenido').style.display = 'block';
@@ -148,6 +169,29 @@ async function cargarDatos(){
     estado.textContent = 'Error al cargar los datos: ' + err.message;
     estado.style.color = 'var(--rojo-crit)';
   }
+}
+
+/**
+ * Devuelve true solo si el registro tiene al menos un bloque de farmacia (_1 a _5)
+ * con información real capturada (no solo la identificación de la IPRESS guardada
+ * con una tarjeta de farmacia vacía por defecto).
+ */
+function tieneInformacionFarmacia(reg){
+  for(let n = 1; n <= 5; n++){
+    const cantPCs = parseFloat(reg['CANT_PCS_' + n]) || 0;
+    const cantFaltantes = parseFloat(reg['CANT_PCS_FALTANTES_' + n]) || 0;
+    const procesador = reg['PROCESADOR_' + n];
+    const conexionEstable = reg['CONEXION_ESTABLE_' + n];
+    const algunaPregunta = CRITERIOS_BRECHA.some(c => {
+      const val = reg[c.col + '_' + n];
+      return val === 'Si' || val === 'No' || val === 'Menor a 6' || val === '6' || val === '6A' || val === 'Superior';
+    });
+
+    if(cantPCs > 0 || cantFaltantes > 0 || procesador || conexionEstable || algunaPregunta){
+      return true;
+    }
+  }
+  return false;
 }
 
 function calcularPorDiris(){
@@ -202,7 +246,74 @@ function renderDashboard(){
     <div class="item"><div class="num">${sumaTotal}</div><div class="lbl">Total IPRESS (4 DIRIS)</div></div>
   `;
 
+  renderRankingBrechas();
   renderTabla();
+}
+
+// --- Ranking de brechas más comunes (a partir de los bloques de farmacia _1 a _5) ---
+const CRITERIOS_BRECHA = [
+  { col: 'Q_I3_O_SUPERIOR', texto: 'No cuenta con Intel Core i3 o superior' },
+  { col: 'Q_RAM_8GB_64BITS', texto: 'No dispone de 8 GB de RAM o más (64 bits)' },
+  { col: 'Q_SSD_500GB', texto: 'No cuenta con disco sólido (SSD) de 500 GB o más' },
+  { col: 'Q_FIBRA_OPTICA', texto: 'No tiene conexión a Internet por fibra óptica' },
+  { col: 'Q_10MBPS_DEDICADO', texto: 'La conexión dedicada no alcanza los 10 Mbps' },
+  { col: 'Q_WIFI_ESTABLE', texto: 'No cuenta con red Wi-Fi estable' },
+  { col: 'Q_CABLEADO_CAT6', texto: 'Cableado de red menor a categoría 6', tipo: 'cableado' },
+  { col: 'Q_FILTRADO_NAVEGACION', texto: 'No aplica mecanismos de filtrado y control de navegación' },
+  { col: 'Q_RED_ESTABLE_CONTINUIDAD', texto: 'La red no garantiza la continuidad de operación del sistema' },
+  { col: 'Q_PUERTOS_SUFICIENTES', texto: 'No cuenta con puertos de red/equipos de comunicación suficientes' },
+  { col: 'CONEXION_ESTABLE', texto: 'Sin conexión estable para operar SISMED o sistema propio', tipo: 'estable' },
+  { col: 'Q_PRESUPUESTO_NIVELAR', texto: 'No tiene presupuesto para nivelar el equipamiento mínimo' },
+];
+
+function renderRankingBrechas(){
+  const cont = document.getElementById('listaBrechas');
+  const conteo = {};
+  CRITERIOS_BRECHA.forEach(c => conteo[c.col] = { noCumple: 0, respondidas: 0 });
+
+  registrosCompletos.forEach(reg => {
+    for(let n = 1; n <= 5; n++){
+      const nombreFarmacia = reg['NOMBRE_FARMACIA_' + n];
+      if(!nombreFarmacia) continue; // ese bloque de farmacia no fue usado
+
+      CRITERIOS_BRECHA.forEach(c => {
+        const valor = reg[c.col + '_' + n];
+        if(valor === undefined || valor === null || valor === '') return;
+
+        conteo[c.col].respondidas++;
+        if(c.tipo === 'cableado'){
+          if(valor === 'Menor a 6') conteo[c.col].noCumple++;
+        } else if(c.tipo === 'estable'){
+          if(valor === 'No Estable') conteo[c.col].noCumple++;
+        } else {
+          if(valor === 'No') conteo[c.col].noCumple++;
+        }
+      });
+    }
+  });
+
+  const brechas = CRITERIOS_BRECHA.map(c => {
+    const { noCumple, respondidas } = conteo[c.col];
+    const pct = respondidas > 0 ? Math.round((noCumple / respondidas) * 100) : 0;
+    return { texto: c.texto, pct, respondidas };
+  }).filter(b => b.respondidas > 0)
+    .sort((a, b) => b.pct - a.pct);
+
+  if(brechas.length === 0){
+    cont.innerHTML = '<div class="sin-resultados">Aún no hay farmacias registradas para calcular brechas.</div>';
+    return;
+  }
+
+  cont.innerHTML = brechas.map((b, i) => `
+    <div class="fila-brecha">
+      <span class="num">${i + 1}</span>
+      <div class="texto">
+        ${b.texto}
+        <div class="barra-mini"><div class="barra-mini-fill" style="width:${b.pct}%;"></div></div>
+      </div>
+      <span class="pct-brecha">${b.pct}%</span>
+    </div>
+  `).join('');
 }
 
 function renderTabla(){
