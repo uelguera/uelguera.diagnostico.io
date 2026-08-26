@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SETI-SIS · Dashboard de Avance — Farmacia Nivel I Lima</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --azul-inst:#0B3D5C; --azul-claro:#1B6E93; --verde-ok:#1E7A46; --rojo-crit:#B3261E;
@@ -47,6 +48,11 @@
   }
   .controles select{flex:0 0 180px;}
   .controles input{flex:1; min-width:180px;}
+  .btn-descargar{
+    flex:0 0 auto; padding:8px 16px; background:var(--verde-ok); color:#fff; border:none;
+    border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .btn-descargar:hover{opacity:.9;}
 
   table{width:100%; border-collapse:collapse; font-size:13px;}
   thead th{
@@ -115,12 +121,13 @@
           <option value="LIMA ESTE">Lima Este</option>
         </select>
         <input type="text" id="buscarTabla" placeholder="Buscar por nombre, código o distrito..." oninput="renderTabla()">
+        <button type="button" class="btn-descargar" onclick="descargarExcel()">⬇ Descargar Excel</button>
       </div>
       <div class="contador-resultados" id="contadorResultados"></div>
       <div class="tabla-scroll">
         <table>
           <thead>
-            <tr><th>Código</th><th>Nombre</th><th>DIRIS</th><th>Distrito</th><th>Categoría</th><th>Red</th></tr>
+            <tr><th>Código</th><th>Nombre</th><th>DIRIS</th><th>Distrito</th><th>Categoría</th></tr>
           </thead>
           <tbody id="tbodyPendientes"></tbody>
         </table>
@@ -316,7 +323,7 @@ function renderRankingBrechas(){
   `).join('');
 }
 
-function renderTabla(){
+function obtenerPendientesFiltrados(){
   const filtroDiris = document.getElementById('filtroDiris').value;
   const q = document.getElementById('buscarTabla').value.trim().toLowerCase();
 
@@ -332,12 +339,16 @@ function renderTabla(){
   });
 
   pendientes.sort((a, b) => a.n.localeCompare(b.n, 'es'));
+  return pendientes;
+}
 
+function renderTabla(){
+  const pendientes = obtenerPendientesFiltrados();
   const tbody = document.getElementById('tbodyPendientes');
   document.getElementById('contadorResultados').textContent = pendientes.length + ' IPRESS pendiente(s)';
 
   if(pendientes.length === 0){
-    tbody.innerHTML = '<tr><td colspan="6" class="sin-resultados">No hay IPRESS pendientes con estos filtros.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="sin-resultados">No hay IPRESS pendientes con estos filtros.</td></tr>';
     return;
   }
 
@@ -348,9 +359,44 @@ function renderTabla(){
       <td><span class="tag-diris">${DIRIS_LABELS[item.disa]}</span></td>
       <td>${item.dist}</td>
       <td>${item.c}</td>
-      <td>${item.red}</td>
     </tr>
   `).join('');
+}
+
+function descargarExcel(){
+  const pendientes = obtenerPendientesFiltrados();
+  if(pendientes.length === 0){
+    alert('No hay IPRESS pendientes con los filtros actuales para descargar.');
+    return;
+  }
+
+  const filtroDiris = document.getElementById('filtroDiris').value;
+  const encabezados = ['Código', 'Nombre', 'DIRIS', 'Distrito', 'Categoría'];
+
+  const filas = pendientes.map(item => [
+    item.r, item.n, DIRIS_LABELS[item.disa], item.dist, item.c
+  ]);
+
+  const datos = [encabezados, ...filas];
+  const hoja = XLSX.utils.aoa_to_sheet(datos);
+
+  // Ancho de columnas para que se vea prolijo al abrir
+  hoja['!cols'] = [
+    { wch: 10 }, // Código
+    { wch: 45 }, // Nombre
+    { wch: 14 }, // DIRIS
+    { wch: 18 }, // Distrito
+    { wch: 10 }, // Categoría
+  ];
+
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Pendientes');
+
+  const nombreArchivo = 'ipress_pendientes_' +
+    (filtroDiris === 'TODOS' ? 'todas_diris' : filtroDiris.toLowerCase().replace(/\s+/g, '_')) +
+    '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+
+  XLSX.writeFile(libro, nombreArchivo);
 }
 
 cargarDatos();
