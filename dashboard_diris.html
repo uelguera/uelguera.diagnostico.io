@@ -231,7 +231,13 @@ function renderDashboard(){
 
   let sumaTotal = 0, sumaLlenadas = 0;
 
-  Object.keys(DIRIS_LABELS).forEach(key => {
+  const clavesOrdenadas = Object.keys(DIRIS_LABELS).slice().sort((a, b) => {
+    const pctA = resumen[a].total > 0 ? resumen[a].llenadas / resumen[a].total : 0;
+    const pctB = resumen[b].total > 0 ? resumen[b].llenadas / resumen[b].total : 0;
+    return pctB - pctA;
+  });
+
+  clavesOrdenadas.forEach(key => {
     const r = resumen[key];
     const pct = r.total > 0 ? Math.round((r.llenadas / r.total) * 100) : 0;
     const faltan = r.total - r.llenadas;
