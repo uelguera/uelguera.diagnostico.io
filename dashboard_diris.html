@@ -25,7 +25,7 @@
   .estado{text-align:center; padding:40px 20px; color:var(--gris); font-size:14px;}
 
   .grid-diris{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:20px;}
-  .card-diris{background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:18px 20px;}
+  .card-diris{background:var(--panel); border:1px solid var(--borde); border-left-width:4px; border-radius:0 12px 12px 0; padding:18px 20px;}
   .card-diris h3{margin:0 0 12px; font-size:14.5px; color:var(--azul-inst); display:flex; align-items:center; gap:8px;}
   .pct{font-size:30px; font-weight:700; color:var(--azul-inst);}
   .pct-label{font-size:12.5px; color:var(--gris); margin-left:6px;}
@@ -79,6 +79,7 @@
   .fila-brecha .pct-brecha{font-size:13px; font-weight:700; color:var(--rojo-crit); width:70px; text-align:right; flex:0 0 auto;}
   .fila-brecha .barra-mini{height:5px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:4px;}
   .fila-brecha .barra-mini-fill{height:100%; background:var(--rojo-crit); border-radius:3px;}
+  .brechas-scroll{max-height:260px; overflow-y:auto;}
 </style>
 </head>
 <body>
@@ -106,8 +107,8 @@
 
     <div class="panel-ranking">
       <h2>📉 Brechas más comunes</h2>
-      <p class="sub">De las farmacias registradas, porcentaje que NO cumple cada característica (mayor a menor).</p>
-      <div id="listaBrechas"></div>
+      <p class="sub">De las farmacias registradas, porcentaje que NO cumple cada característica (mayor a menor). Se muestran las 5 principales; desplázate para ver el resto.</p>
+      <div class="brechas-scroll" id="listaBrechas"></div>
     </div>
 
     <div class="panel-tabla">
@@ -149,6 +150,14 @@ const DIRIS_LABELS = {
   "LIMA NORTE": "Lima Norte",
   "LIMA SUR": "Lima Sur",
   "LIMA ESTE": "Lima Este",
+};
+
+// Colores tomados del logo del SIS, uno por DIRIS
+const DIRIS_COLORS = {
+  "LIMA CENTRO": "#D8378E",
+  "LIMA NORTE": "#F6A74A",
+  "LIMA SUR": "#3AA9D8",
+  "LIMA ESTE": "#7A9126",
 };
 
 let renipressRegistrados = new Set();
@@ -229,13 +238,14 @@ function renderDashboard(){
     sumaTotal += r.total;
     sumaLlenadas += r.llenadas;
 
-    const color = pct >= 80 ? 'var(--verde-ok)' : (pct >= 40 ? 'var(--azul-claro)' : 'var(--rojo-crit)');
+    const color = DIRIS_COLORS[key];
 
     const card = document.createElement('div');
     card.className = 'card-diris';
+    card.style.borderLeftColor = color;
     card.innerHTML = `
       <h3>📍 ${DIRIS_LABELS[key]}</h3>
-      <span class="pct">${pct}%</span><span class="pct-label">completado</span>
+      <span class="pct" style="color:${color};">${pct}%</span><span class="pct-label">completado</span>
       <div class="barra-bg"><div class="barra-fill" style="width:${pct}%; background:${color};"></div></div>
       <div class="detalle">
         <span><b>${r.llenadas}</b> de <b>${r.total}</b> llenadas</span>
@@ -356,7 +366,7 @@ function renderTabla(){
     <tr>
       <td>${item.r}</td>
       <td>${item.n}</td>
-      <td><span class="tag-diris">${DIRIS_LABELS[item.disa]}</span></td>
+      <td><span class="tag-diris" style="background:${DIRIS_COLORS[item.disa]}22; color:${DIRIS_COLORS[item.disa]};">${DIRIS_LABELS[item.disa]}</span></td>
       <td>${item.dist}</td>
       <td>${item.c}</td>
     </tr>
