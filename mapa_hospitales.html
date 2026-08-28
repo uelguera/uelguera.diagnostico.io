@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SETI-SIS · Mapa de IPRESS — Farmacia Lima Metropolitana</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --azul-inst:#0B3D5C; --azul-claro:#1B6E93; --verde-ok:#1E7A46; --rojo-crit:#B3261E;
+    --ambar:#B3401A; --gris:#6B7A82; --borde:#E1E6E8; --panel:#fff; --fondo:#f4f6f7;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:'Segoe UI',Arial,sans-serif; background:var(--fondo); margin:0; padding:0; color:#1a1a1a;}
+  .wrap{max-width:1080px; margin:0 auto; padding:28px 20px 60px;}
+
+  .header{background:var(--azul-inst); color:#fff; padding:26px 28px; border-radius:10px; margin-bottom:22px;}
+  .header-top{display:flex; align-items:center; gap:16px;}
+  .header-logo{flex:0 0 auto; width:56px; height:56px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:4px;}
+  .header-logo img{max-width:100%; max-height:100%; object-fit:contain;}
+  .eyebrow{font-size:12px; letter-spacing:1.5px; text-transform:uppercase; opacity:.75; margin-bottom:6px;}
+  .header h1{margin:0; font-size:20px; font-weight:600;}
+  .header p{margin:14px 0 0; font-size:13px; opacity:.85;}
+
+  .leyenda{display:flex; gap:18px; align-items:center; margin-bottom:14px; flex-wrap:wrap; font-size:12.5px;}
+  .leyenda .item{display:flex; align-items:center; gap:6px;}
+  .leyenda .punto{width:12px; height:12px; border-radius:50%; display:inline-block; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.15);}
+
+  #mapa{height:600px; border-radius:12px; border:1px solid var(--borde); overflow:hidden; margin-bottom:20px;}
+
+  .popup-hospital{font-size:13px; min-width:220px;}
+  .popup-hospital h3{margin:0 0 6px; font-size:13.5px; color:var(--azul-inst);}
+  .popup-hospital .pct{font-size:20px; font-weight:700;}
+  .popup-hospital .detalle{color:var(--gris); font-size:12px; margin-top:4px;}
+
+  .panel-tabla{background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:20px 22px;}
+  .panel-tabla h2{font-size:15px; margin:0 0 14px; color:var(--azul-inst);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; padding:8px 10px; background:#f4f8fb; color:var(--azul-inst);
+    font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.3px;
+  }
+  tbody td{padding:8px 10px; border-bottom:1px solid #f0f0f0;}
+  tbody tr:hover{background:#fafcfd; cursor:pointer;}
+  .badge-nivel{display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:10px; font-weight:700;}
+  .badge-nivel.alto{background:#E8F4EC; color:var(--verde-ok);}
+  .badge-nivel.medio{background:#FDF3E7; color:var(--ambar);}
+  .badge-nivel.bajo{background:#FBEAEA; color:var(--rojo-crit);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="header-logo">
+        <img src="data:image/png;base64,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" alt="Logo SIS">
+      </div>
+      <div>
+        <div class="eyebrow">SETI-SIS · Diagnóstico de brecha tecnológica</div>
+        <h1>Mapa de IPRESS — Farmacia (Lima Metropolitana)</h1>
+      </div>
+    </div>
+    <p>Ubicación geográfica de los 26 hospitales evaluados, coloreados según su nivel de cumplimiento técnico en Farmacia.</p>
+  </div>
+
+  <div class="leyenda">
+    <div class="item"><span class="punto" style="background:#1E7A46;"></span> Alto (≥80%)</div>
+    <div class="item"><span class="punto" style="background:#B3401A;"></span> Medio (50–79%)</div>
+    <div class="item"><span class="punto" style="background:#B3261E;"></span> Bajo (&lt;50%)</div>
+  </div>
+
+  <div id="mapa"></div>
+
+  <div class="panel-tabla">
+    <h2>Detalle por hospital</h2>
+    <table>
+      <thead>
+        <tr><th>Hospital</th><th>Categoría</th><th>Farmacias</th><th>PCs</th><th>Cumplimiento</th></tr>
+      </thead>
+      <tbody id="tbodyHospitales"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const HOSPITALES = [{"cod": "00005987", "nombre": "HOSPITAL MARIA AUXILIADORA", "categoria": "III-1", "num_farmacias": 14, "total_pcs": 36, "total_brecha": 0, "cumplimiento_pct": 69, "nivel": "Medio", "lat": -12.1611333, "lng": -76.9584172, "place_id": "ChIJ____A_q4BZERZjzXEKSxIAA"}, {"cod": "00033381", "nombre": "HOSPITAL DE LIMA ESTE -VITARTE", "categoria": "III-E", "num_farmacias": 3, "total_pcs": 17, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.0261339, "lng": -76.9173085, "place_id": "ChIJc3fhcfjDBZERYXd7KF10XVw"}, {"cod": "00023159", "nombre": "HOSPITAL DE EMERGENCIAS VILLA EL SALVADOR", "categoria": "II-2", "num_farmacias": 10, "total_pcs": 29, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.2328783, "lng": -76.9343805, "place_id": "ChIJj1bTY-67BZEROIyVkpAmMJY"}, {"cod": "00016918", "nombre": "INSTITUTO NACIONAL DE SALUD NIÑO SAN BORJA", "categoria": "III-2", "num_farmacias": 6, "total_pcs": 23, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.08605, "lng": -76.9925112, "place_id": "ChIJ1bU4dMvHBZER9fSqrazdMGI"}, {"cod": "00006217", "nombre": "INSTITUTO NACIONAL DE OFTALMOLOGÍA DR. FRANCISCO CONTRERAS CAMPOS", "categoria": "III-2", "num_farmacias": 6, "total_pcs": 17, "total_brecha": 0, "cumplimiento_pct": 72, "nivel": "Medio", "lat": -12.0512579, "lng": -77.0557194, "place_id": "ChIJMZ1XwdfIBZERlybRlfJyCqQ"}, {"cod": "00005948", "nombre": "HOSPITAL HERMILIO VALDIZAN", "categoria": "III-E", "num_farmacias": 8, "total_pcs": 20, "total_brecha": 0, "cumplimiento_pct": 76, "nivel": "Medio", "lat": -12.0466274, "lng": -76.9459305, "place_id": "ChIJ6zQkwJnGBZER4TR2hwF6IE4"}, {"cod": "00006214", "nombre": "HOSPITAL VICTOR LARCO HERRERA", "categoria": "III-E", "num_farmacias": 7, "total_pcs": 14, "total_brecha": 0, "cumplimiento_pct": 79, "nivel": "Medio", "lat": -12.099055, "lng": -77.0659835, "place_id": "ChIJqVZnya_JBZERuwZWqlL1Q3k"}, {"cod": "00005883", "nombre": "HOSPITAL DE HUAYCAN", "categoria": "II-1", "num_farmacias": 6, "total_pcs": 15, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0157567, "lng": -76.8203021, "place_id": "ChIJ21qIiuPpBZER07GhregNY2M"}, {"cod": "00005946", "nombre": "HOSPITAL NACIONAL HIPOLITO UNANUE", "categoria": "III-1", "num_farmacias": 14, "total_pcs": 64, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0401923, "lng": -76.9931772, "place_id": "ChIJpWPV6uXFBZER6KPvVftRsbk"}, {"cod": "00006210", "nombre": "INSTITUTO NACIONAL DE ENFERMEDADES NEOPLASICAS", "categoria": "III-2", "num_farmacias": 15, "total_pcs": 68, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.112488, "lng": -76.9982768, "place_id": "ChIJh9YF_wnIBZERSN-gJXf43Xc"}, {"cod": "00006211", "nombre": "HOSPITAL DE APOYO SANTA ROSA", "categoria": "III-1", "num_farmacias": 9, "total_pcs": 37, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.071988, "lng": -77.061039, "place_id": "ChIJAeVDZhzJBZERK7Bg7olk6Tc"}, {"cod": "00006216", "nombre": "INSTITUTO NACIONAL DE SALUD DEL NIÑO", "categoria": "III-2", "num_farmacias": 12, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.08605, "lng": -76.9925112, "place_id": "ChIJ1bU4dMvHBZER9fSqrazdMGI"}, {"cod": "00007734", "nombre": "INSTITUTO NACIONAL DE REHABILITACION DRA. ADRIANA REBAZA FLORES - AMISTAD PERU-JAPON", "categoria": "III-E", "num_farmacias": 2, "total_pcs": 3, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.1920588, "lng": -77.0039936, "place_id": "ChIJySvHQty5BZERrmNV6lwrdMM"}, {"cod": "00006206", "nombre": "HOSPITAL NACIONAL DOS DE MAYO", "categoria": "III-1", "num_farmacias": 20, "total_pcs": 58, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0567369, "lng": -77.0160596, "place_id": "ChIJC3q0pabIBZERpYJfQqnojN0"}, {"cod": "00006207", "nombre": "HOSPITAL NACIONAL ARZOBISPO LOAYZA", "categoria": "III-1", "num_farmacias": 8, "total_pcs": 58, "total_brecha": 0, "cumplimiento_pct": 81, "nivel": "Alto", "lat": -12.0499382, "lng": -77.043819, "place_id": "ChIJT9pxy8_IBZERnJhjZ9u2bpY"}, {"cod": "00007733", "nombre": "INSTITUTO NACIONAL DE SALUD MENTAL \"HONORIO DELGADO - HIDEYO NOGUCHI\"", "categoria": "III-2", "num_farmacias": 5, "total_pcs": 19, "total_brecha": 0, "cumplimiento_pct": 82, "nivel": "Alto", "lat": -12.0208145, "lng": -77.0567883, "place_id": "ChIJWyLe9d_OBZER0oOXZEFAmVc"}, {"cod": "00007632", "nombre": "HOSPITAL CARLOS LANFRANCO LA HOZ", "categoria": "II-2", "num_farmacias": 6, "total_pcs": 19, "total_brecha": 0, "cumplimiento_pct": 83, "nivel": "Alto", "lat": -11.8627339, "lng": -77.07952, "place_id": "ChIJlRg4YLXWBZERqOvbYnfITZU"}, {"cod": "00007634", "nombre": "HOSPITAL SERGIO E. BERNALES", "categoria": "III-1", "num_farmacias": 6, "total_pcs": 23, "total_brecha": 0, "cumplimiento_pct": 83, "nivel": "Alto", "lat": -11.9138203, "lng": -77.0391782, "place_id": "ChIJO9wUQlzQBZERYTLMr8ZSeio"}, {"cod": "00005947", "nombre": "HOSPITAL DE MEDIANA COMPLEJIDAD JOSE AGURTO TELLO", "categoria": "II-2", "num_farmacias": 5, "total_pcs": 16, "total_brecha": 0, "cumplimiento_pct": 88, "nivel": "Alto", "lat": -11.934365, "lng": -76.6934592, "place_id": "ChIJ72NmTIflBZERdNe0V6EsiZU"}, {"cod": "00006209", "nombre": "INSTITUTO NACIONAL DE CIENCIAS NEUROLOGICAS", "categoria": "III-2", "num_farmacias": 4, "total_pcs": 17, "total_brecha": 0, "cumplimiento_pct": 88, "nivel": "Alto", "lat": -12.0463015, "lng": -77.0161038, "place_id": "ChIJiS_r_6vIBZERzidisIwcfpA"}, {"cod": "00006212", "nombre": "HOSPITAL DE EMERGENCIAS PEDIATRICAS", "categoria": "III-E", "num_farmacias": 7, "total_pcs": 15, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0583673, "lng": -77.0216179, "place_id": "ChIJqRIwSqPIBZERvFzCuN2d7zI"}, {"cod": "00006213", "nombre": "HOSPITAL DE EMERGENCIAS JOSÉ CASIMIRO ULLOA", "categoria": "III-E", "num_farmacias": 4, "total_pcs": 15, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.1281188, "lng": -77.0177211, "place_id": "ChIJ4cYbQgLIBZERwjbr-R427Vg"}, {"cod": "00006215", "nombre": "HOSPITAL NACIONAL DOCENTE MADRE NIÑO SAN BARTOLOME", "categoria": "III-E", "num_farmacias": 8, "total_pcs": 49, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0497615, "lng": -77.0420353, "place_id": "ChIJB3-lAc_IBZERTzGIhlNDKYU"}, {"cod": "00007633", "nombre": "HOSPITAL NACIONAL CAYETANO HEREDIA", "categoria": "III-1", "num_farmacias": 8, "total_pcs": 50, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0222989, "lng": -77.0556524, "place_id": "ChIJB9ivWSDPBZERfkU563J8hxU"}, {"cod": "00006208", "nombre": "INSTITUTO NACIONAL MATERNO PERINATAL", "categoria": "III-2", "num_farmacias": 11, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 98, "nivel": "Alto", "lat": -12.0527686, "lng": -77.0221638, "place_id": "ChIJU3B8srrIBZER4uMp-nX2egY"}, {"cod": "00005617", "nombre": "HOSPITAL SAN JUAN DE LURIGANCHO", "categoria": "II-2", "num_farmacias": 10, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 100, "nivel": "Alto", "lat": -11.9663244, "lng": -77.0034769, "place_id": "ChIJOzET8lvFBZERLFmccmeQgQs"}];
+
+const mapa = L.map('mapa').setView([-12.05, -77.02], 11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 18,
+}).addTo(mapa);
+
+function colorPorNivel(nivel){
+  if(nivel === 'Alto') return '#1E7A46';
+  if(nivel === 'Medio') return '#B3401A';
+  return '#B3261E';
+}
+
+const marcadores = {};
+
+HOSPITALES.forEach(h => {
+  const color = colorPorNivel(h.nivel);
+  const marker = L.circleMarker([h.lat, h.lng], {
+    radius: 9,
+    fillColor: color,
+    color: '#fff',
+    weight: 2,
+    fillOpacity: 0.9,
+  }).addTo(mapa);
+
+  marker.bindPopup(`
+    <div class="popup-hospital">
+      <h3>${h.nombre}</h3>
+      <div class="pct" style="color:${color};">${h.cumplimiento_pct}%</div>
+      <div class="detalle">
+        Categoría ${h.categoria} · ${h.num_farmacias} farmacias · ${h.total_pcs} PCs<br>
+        Brecha total: ${h.total_brecha} PCs
+      </div>
+    </div>
+  `);
+
+  marcadores[h.cod] = marker;
+});
+
+// Tabla + interacción click -> abre popup en el mapa
+const tbody = document.getElementById('tbodyHospitales');
+const hospitalesOrdenados = [...HOSPITALES].sort((a, b) => a.cumplimiento_pct - b.cumplimiento_pct);
+
+tbody.innerHTML = hospitalesOrdenados.map(h => {
+  const nivelClase = h.nivel.toLowerCase();
+  return `
+    <tr data-cod="${h.cod}">
+      <td><b>${h.nombre}</b></td>
+      <td>${h.categoria}</td>
+      <td>${h.num_farmacias}</td>
+      <td>${h.total_pcs}</td>
+      <td><span class="badge-nivel ${nivelClase}">${h.cumplimiento_pct}% · ${h.nivel}</span></td>
+    </tr>`;
+}).join('');
+
+tbody.querySelectorAll('tr').forEach(row => {
+  row.addEventListener('click', () => {
+    const cod = row.dataset.cod;
+    const marker = marcadores[cod];
+    if(marker){
+      mapa.setView(marker.getLatLng(), 14);
+      marker.openPopup();
+    }
+  });
+});
+</script>
+</body>
+</html>
