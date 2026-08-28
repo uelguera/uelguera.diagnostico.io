@@ -23,13 +23,18 @@
   .header h1{margin:0; font-size:20px; font-weight:600;}
   .header p{margin:14px 0 0; font-size:13px; opacity:.85;}
 
+  .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:20px;}
+  .kpi-card{background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:16px 18px; text-align:center;}
+  .kpi-card .num{font-size:24px; font-weight:700; color:var(--azul-inst);}
+  .kpi-card .lbl{font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.3px; margin-top:4px;}
+
   .leyenda{display:flex; gap:18px; align-items:center; margin-bottom:14px; flex-wrap:wrap; font-size:12.5px;}
   .leyenda .item{display:flex; align-items:center; gap:6px;}
   .leyenda .punto{width:12px; height:12px; border-radius:50%; display:inline-block; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.15);}
 
   #mapa{height:600px; border-radius:12px; border:1px solid var(--borde); overflow:hidden; margin-bottom:20px;}
 
-  .popup-hospital{font-size:13px; min-width:220px;}
+  .popup-hospital{font-size:13px; min-width:260px; max-width:280px;}
   .popup-hospital h3{margin:0 0 6px; font-size:13.5px; color:var(--azul-inst);}
   .popup-hospital .pct{font-size:20px; font-weight:700;}
   .popup-hospital .detalle{color:var(--gris); font-size:12px; margin-top:4px;}
@@ -47,6 +52,46 @@
   .badge-nivel.alto{background:#E8F4EC; color:var(--verde-ok);}
   .badge-nivel.medio{background:#FDF3E7; color:var(--ambar);}
   .badge-nivel.bajo{background:#FBEAEA; color:var(--rojo-crit);}
+  .badge-nivel{cursor:help;}
+
+  .tag-diris{
+    display:inline-block; font-size:10.5px; text-transform:uppercase; padding:2px 8px;
+    border-radius:10px; font-weight:700; background:#E6F0F5; color:var(--azul-claro);
+  }
+
+  .controles{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
+  .controles select{
+    padding:8px 10px; border:1px solid var(--borde); border-radius:6px; font-size:13px; font-family:inherit;
+  }
+  .contador-resultados{font-size:12.5px; color:var(--gris);}
+
+  th.ordenable{cursor:pointer; user-select:none; white-space:nowrap;}
+  th.ordenable:hover{background:#e9f1f5;}
+  .flecha-orden{font-size:10px; color:var(--azul-claro);}
+
+  .nota{font-size:11.5px; color:var(--gris); line-height:1.5; margin-top:14px;}
+
+  .sub-panel{font-size:12px; color:var(--gris); margin:0 0 16px;}
+  .fila-tipo{display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #f0f0f0;}
+  .fila-tipo:last-child{border-bottom:none;}
+  .fila-tipo .nombre-tipo{width:180px; flex:0 0 auto; font-size:13px;}
+  .fila-tipo .barra-bg-tipo{flex:1; height:14px; background:#f0f4f5; border-radius:4px; overflow:hidden;}
+  .fila-tipo .barra-fill-tipo{height:100%; border-radius:4px;}
+  .fila-tipo .valor-tipo{width:90px; flex:0 0 auto; text-align:right; font-size:12.5px; color:var(--gris);}
+
+  .btn-detalle{
+    background:#EEF3F5; color:var(--azul-inst); border:none; padding:5px 10px;
+    border-radius:6px; font-size:11.5px; font-weight:600; cursor:pointer;
+  }
+  .btn-detalle:hover{background:#dde8ec;}
+  .fila-detalle{background:#fafcfd;}
+  .tabla-mini{width:100%; border-collapse:collapse; font-size:12px;}
+  .tabla-mini thead th{
+    text-align:left; padding:6px 10px; background:#eef4f7; color:var(--azul-claro);
+    font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.2px;
+  }
+  .tabla-mini tbody td{padding:6px 10px; border-bottom:1px solid #eef0f0;}
+  .tabla-mini tbody tr:last-child td{border-bottom:none;}
 </style>
 </head>
 <body>
@@ -62,49 +107,114 @@
         <h1>Mapa de IPRESS — Farmacia (Lima Metropolitana)</h1>
       </div>
     </div>
-    <p>Ubicación geográfica de los 26 hospitales evaluados, coloreados según su nivel de cumplimiento técnico en Farmacia.</p>
+    <p>Fase 1 (26 IPRESS) del proyecto MINSA de modernización de SISMED. El objetivo final es que cada farmacia pueda registrar movimientos de stock para balancear medicamentos a nivel nacional — derivando insumos sin rotación hacia IPRESS con mayor demanda. Para eso, primero es necesario que el personal cuente con el equipo (PCs) necesario: sin PC no hay registro, y sin registro no hay data para balancear el stock.</p>
   </div>
 
+  <div class="kpi-grid" id="kpiGrid"></div>
+
   <div class="leyenda">
-    <div class="item"><span class="punto" style="background:#1E7A46;"></span> Alto (≥80%)</div>
-    <div class="item"><span class="punto" style="background:#B3401A;"></span> Medio (50–79%)</div>
-    <div class="item"><span class="punto" style="background:#B3261E;"></span> Bajo (&lt;50%)</div>
+    <div class="item"><span class="punto" style="background:#B3261E;"></span> Brecha Alta (≥51%)</div>
+    <div class="item"><span class="punto" style="background:#E68A2E;"></span> Brecha Media (20–50%)</div>
+    <div class="item"><span class="punto" style="background:#1E7A46;"></span> Brecha Baja (&lt;20%)</div>
   </div>
 
   <div id="mapa"></div>
 
   <div class="panel-tabla">
-    <h2>Detalle por hospital</h2>
+    <h2>Detalle por IPRESS</h2>
+    <div class="controles">
+      <select id="filtroDiris" onchange="renderTablaHospitales()">
+        <option value="TODOS">Todas las DIRIS</option>
+        <option value="Centro">Centro</option>
+        <option value="Norte">Norte</option>
+        <option value="Sur">Sur</option>
+        <option value="Este">Este</option>
+      </select>
+      <span class="contador-resultados" id="contadorResultados"></span>
+    </div>
     <table>
       <thead>
-        <tr><th>Hospital</th><th>Categoría</th><th>Farmacias</th><th>PCs</th><th>Cumplimiento</th></tr>
+        <tr>
+          <th class="ordenable" data-campo="diris">DIRIS <span class="flecha-orden"></span></th>
+          <th class="ordenable" data-campo="nombre">IPRESS <span class="flecha-orden">▲</span></th>
+          <th class="ordenable" data-campo="categoria">Categoría <span class="flecha-orden"></span></th>
+          <th class="ordenable" data-campo="num_farmacias">Farmacias <span class="flecha-orden"></span></th>
+          <th class="ordenable" data-campo="total_pcs">PCs actuales <span class="flecha-orden"></span></th>
+          <th class="ordenable" data-campo="brecha_in_situ">PCs faltantes <span class="flecha-orden"></span></th>
+          <th class="ordenable" data-campo="pcs_alquiladas">PCs alquiladas <span class="flecha-orden"></span></th>
+          <th>Detalle</th>
+
+        </tr>
       </thead>
       <tbody id="tbodyHospitales"></tbody>
     </table>
   </div>
 
+  <div class="panel-tabla">
+    <h2>Tipos de farmacia más críticos (Lima)</h2>
+    <p class="sub-panel">Cumplimiento promedio de las 214 farmacias evaluadas, agrupadas por tipo — independientemente de la IPRESS. Un tipo consistentemente bajo en todas las IPRESS sugiere una política de compra específica por servicio, no solo por hospital.</p>
+    <div id="rankingTipos"></div>
+  </div>
+
+  <p class="nota">
+    "PCs faltantes" y "PCs alquiladas" son PCs <b>adicionales</b> a las que ya tiene la farmacia — no es una resta contra el
+    total actual, sino la cantidad extra que el personal necesita para operar bien, según la vía de adquisición prevista.
+    Una IPRESS puede tener PCs suficientes en una farmacia y aun así necesitar más en otra dentro de la misma IPRESS.
+  </p>
+
 </div>
 
 <script>
-const HOSPITALES = [{"cod": "00005987", "nombre": "HOSPITAL MARIA AUXILIADORA", "categoria": "III-1", "num_farmacias": 14, "total_pcs": 36, "total_brecha": 0, "cumplimiento_pct": 69, "nivel": "Medio", "lat": -12.1611333, "lng": -76.9584172, "place_id": "ChIJ____A_q4BZERZjzXEKSxIAA"}, {"cod": "00033381", "nombre": "HOSPITAL DE LIMA ESTE -VITARTE", "categoria": "III-E", "num_farmacias": 3, "total_pcs": 17, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.0261339, "lng": -76.9173085, "place_id": "ChIJc3fhcfjDBZERYXd7KF10XVw"}, {"cod": "00023159", "nombre": "HOSPITAL DE EMERGENCIAS VILLA EL SALVADOR", "categoria": "II-2", "num_farmacias": 10, "total_pcs": 29, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.2328783, "lng": -76.9343805, "place_id": "ChIJj1bTY-67BZEROIyVkpAmMJY"}, {"cod": "00016918", "nombre": "INSTITUTO NACIONAL DE SALUD NIÑO SAN BORJA", "categoria": "III-2", "num_farmacias": 6, "total_pcs": 23, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.08605, "lng": -76.9925112, "place_id": "ChIJ1bU4dMvHBZER9fSqrazdMGI"}, {"cod": "00006217", "nombre": "INSTITUTO NACIONAL DE OFTALMOLOGÍA DR. FRANCISCO CONTRERAS CAMPOS", "categoria": "III-2", "num_farmacias": 6, "total_pcs": 17, "total_brecha": 0, "cumplimiento_pct": 72, "nivel": "Medio", "lat": -12.0512579, "lng": -77.0557194, "place_id": "ChIJMZ1XwdfIBZERlybRlfJyCqQ"}, {"cod": "00005948", "nombre": "HOSPITAL HERMILIO VALDIZAN", "categoria": "III-E", "num_farmacias": 8, "total_pcs": 20, "total_brecha": 0, "cumplimiento_pct": 76, "nivel": "Medio", "lat": -12.0466274, "lng": -76.9459305, "place_id": "ChIJ6zQkwJnGBZER4TR2hwF6IE4"}, {"cod": "00006214", "nombre": "HOSPITAL VICTOR LARCO HERRERA", "categoria": "III-E", "num_farmacias": 7, "total_pcs": 14, "total_brecha": 0, "cumplimiento_pct": 79, "nivel": "Medio", "lat": -12.099055, "lng": -77.0659835, "place_id": "ChIJqVZnya_JBZERuwZWqlL1Q3k"}, {"cod": "00005883", "nombre": "HOSPITAL DE HUAYCAN", "categoria": "II-1", "num_farmacias": 6, "total_pcs": 15, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0157567, "lng": -76.8203021, "place_id": "ChIJ21qIiuPpBZER07GhregNY2M"}, {"cod": "00005946", "nombre": "HOSPITAL NACIONAL HIPOLITO UNANUE", "categoria": "III-1", "num_farmacias": 14, "total_pcs": 64, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0401923, "lng": -76.9931772, "place_id": "ChIJpWPV6uXFBZER6KPvVftRsbk"}, {"cod": "00006210", "nombre": "INSTITUTO NACIONAL DE ENFERMEDADES NEOPLASICAS", "categoria": "III-2", "num_farmacias": 15, "total_pcs": 68, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.112488, "lng": -76.9982768, "place_id": "ChIJh9YF_wnIBZERSN-gJXf43Xc"}, {"cod": "00006211", "nombre": "HOSPITAL DE APOYO SANTA ROSA", "categoria": "III-1", "num_farmacias": 9, "total_pcs": 37, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.071988, "lng": -77.061039, "place_id": "ChIJAeVDZhzJBZERK7Bg7olk6Tc"}, {"cod": "00006216", "nombre": "INSTITUTO NACIONAL DE SALUD DEL NIÑO", "categoria": "III-2", "num_farmacias": 12, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.08605, "lng": -76.9925112, "place_id": "ChIJ1bU4dMvHBZER9fSqrazdMGI"}, {"cod": "00007734", "nombre": "INSTITUTO NACIONAL DE REHABILITACION DRA. ADRIANA REBAZA FLORES - AMISTAD PERU-JAPON", "categoria": "III-E", "num_farmacias": 2, "total_pcs": 3, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.1920588, "lng": -77.0039936, "place_id": "ChIJySvHQty5BZERrmNV6lwrdMM"}, {"cod": "00006206", "nombre": "HOSPITAL NACIONAL DOS DE MAYO", "categoria": "III-1", "num_farmacias": 20, "total_pcs": 58, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0567369, "lng": -77.0160596, "place_id": "ChIJC3q0pabIBZERpYJfQqnojN0"}, {"cod": "00006207", "nombre": "HOSPITAL NACIONAL ARZOBISPO LOAYZA", "categoria": "III-1", "num_farmacias": 8, "total_pcs": 58, "total_brecha": 0, "cumplimiento_pct": 81, "nivel": "Alto", "lat": -12.0499382, "lng": -77.043819, "place_id": "ChIJT9pxy8_IBZERnJhjZ9u2bpY"}, {"cod": "00007733", "nombre": "INSTITUTO NACIONAL DE SALUD MENTAL \"HONORIO DELGADO - HIDEYO NOGUCHI\"", "categoria": "III-2", "num_farmacias": 5, "total_pcs": 19, "total_brecha": 0, "cumplimiento_pct": 82, "nivel": "Alto", "lat": -12.0208145, "lng": -77.0567883, "place_id": "ChIJWyLe9d_OBZER0oOXZEFAmVc"}, {"cod": "00007632", "nombre": "HOSPITAL CARLOS LANFRANCO LA HOZ", "categoria": "II-2", "num_farmacias": 6, "total_pcs": 19, "total_brecha": 0, "cumplimiento_pct": 83, "nivel": "Alto", "lat": -11.8627339, "lng": -77.07952, "place_id": "ChIJlRg4YLXWBZERqOvbYnfITZU"}, {"cod": "00007634", "nombre": "HOSPITAL SERGIO E. BERNALES", "categoria": "III-1", "num_farmacias": 6, "total_pcs": 23, "total_brecha": 0, "cumplimiento_pct": 83, "nivel": "Alto", "lat": -11.9138203, "lng": -77.0391782, "place_id": "ChIJO9wUQlzQBZERYTLMr8ZSeio"}, {"cod": "00005947", "nombre": "HOSPITAL DE MEDIANA COMPLEJIDAD JOSE AGURTO TELLO", "categoria": "II-2", "num_farmacias": 5, "total_pcs": 16, "total_brecha": 0, "cumplimiento_pct": 88, "nivel": "Alto", "lat": -11.934365, "lng": -76.6934592, "place_id": "ChIJ72NmTIflBZERdNe0V6EsiZU"}, {"cod": "00006209", "nombre": "INSTITUTO NACIONAL DE CIENCIAS NEUROLOGICAS", "categoria": "III-2", "num_farmacias": 4, "total_pcs": 17, "total_brecha": 0, "cumplimiento_pct": 88, "nivel": "Alto", "lat": -12.0463015, "lng": -77.0161038, "place_id": "ChIJiS_r_6vIBZERzidisIwcfpA"}, {"cod": "00006212", "nombre": "HOSPITAL DE EMERGENCIAS PEDIATRICAS", "categoria": "III-E", "num_farmacias": 7, "total_pcs": 15, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0583673, "lng": -77.0216179, "place_id": "ChIJqRIwSqPIBZERvFzCuN2d7zI"}, {"cod": "00006213", "nombre": "HOSPITAL DE EMERGENCIAS JOSÉ CASIMIRO ULLOA", "categoria": "III-E", "num_farmacias": 4, "total_pcs": 15, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.1281188, "lng": -77.0177211, "place_id": "ChIJ4cYbQgLIBZERwjbr-R427Vg"}, {"cod": "00006215", "nombre": "HOSPITAL NACIONAL DOCENTE MADRE NIÑO SAN BARTOLOME", "categoria": "III-E", "num_farmacias": 8, "total_pcs": 49, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0497615, "lng": -77.0420353, "place_id": "ChIJB3-lAc_IBZERTzGIhlNDKYU"}, {"cod": "00007633", "nombre": "HOSPITAL NACIONAL CAYETANO HEREDIA", "categoria": "III-1", "num_farmacias": 8, "total_pcs": 50, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0222989, "lng": -77.0556524, "place_id": "ChIJB9ivWSDPBZERfkU563J8hxU"}, {"cod": "00006208", "nombre": "INSTITUTO NACIONAL MATERNO PERINATAL", "categoria": "III-2", "num_farmacias": 11, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 98, "nivel": "Alto", "lat": -12.0527686, "lng": -77.0221638, "place_id": "ChIJU3B8srrIBZER4uMp-nX2egY"}, {"cod": "00005617", "nombre": "HOSPITAL SAN JUAN DE LURIGANCHO", "categoria": "II-2", "num_farmacias": 10, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 100, "nivel": "Alto", "lat": -11.9663244, "lng": -77.0034769, "place_id": "ChIJOzET8lvFBZERLFmccmeQgQs"}];
+const HOSPITALES = [{"cod": "00005987", "nombre": "HOSPITAL MARIA AUXILIADORA", "categoria": "III-1", "num_farmacias": 14, "total_pcs": 36, "total_brecha": 20, "cumplimiento_pct": 69, "nivel": "Medio", "lat": -12.1611333, "lng": -76.9584172, "place_id": "ChIJ____A_q4BZERZjzXEKSxIAA", "brecha_in_situ": 20, "pcs_alquiladas": 0, "diris": "Sur", "mensaje_guia": "2 de 14 farmacia(s) con 0% (posible dato sin completar), el resto en buen nivel.", "farmacias": [{"tipo": "Oncológica", "pct": 0, "pcs": 0, "faltantes": 1, "alquiladas": 0}, {"tipo": "Nutrición Parental", "pct": 0, "pcs": 0, "faltantes": 1, "alquiladas": 0}, {"tipo": "Central", "pct": 80, "pcs": 5, "faltantes": 2, "alquiladas": 0}, {"tipo": "Clinica", "pct": 80, "pcs": 3, "faltantes": 1, "alquiladas": 0}, {"tipo": "Oncológica", "pct": 80, "pcs": 2, "faltantes": 1, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 2, "faltantes": 1, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 6, "faltantes": 1, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 8, "faltantes": 3, "alquiladas": 0}, {"tipo": "Programa", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Psiquiatria", "pct": 80, "pcs": 2, "faltantes": 2, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 4, "faltantes": 3, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Centro Obstétrico", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}], "brecha_relativa_pct": 56, "nivel_brecha": "Alto"}, {"cod": "00033381", "nombre": "HOSPITAL DE LIMA ESTE -VITARTE", "categoria": "III-E", "num_farmacias": 3, "total_pcs": 17, "total_brecha": 17, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.0261339, "lng": -76.9173085, "place_id": "ChIJc3fhcfjDBZERYXd7KF10XVw", "brecha_in_situ": 0, "pcs_alquiladas": 17, "diris": "Este", "mensaje_guia": "Brecha pareja en todas sus farmacias (mismo problema estructural, ej. red o cableado).", "farmacias": [{"tipo": "Consulta Externa", "pct": 70, "pcs": 4, "faltantes": 0, "alquiladas": 4}, {"tipo": "Emergencia", "pct": 70, "pcs": 6, "faltantes": 0, "alquiladas": 6}, {"tipo": "Hospitalizacion", "pct": 70, "pcs": 7, "faltantes": 0, "alquiladas": 7}], "brecha_relativa_pct": 100, "nivel_brecha": "Alto"}, {"cod": "00023159", "nombre": "HOSPITAL DE EMERGENCIAS VILLA EL SALVADOR", "categoria": "II-2", "num_farmacias": 10, "total_pcs": 29, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.2328783, "lng": -76.9343805, "place_id": "ChIJj1bTY-67BZEROIyVkpAmMJY", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Sur", "mensaje_guia": "Brecha pareja en todas sus farmacias (mismo problema estructural, ej. red o cableado).", "farmacias": [{"tipo": "Central", "pct": 70, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 70, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 70, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 70, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Clinica", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Estrategia Sanitaria", "pct": 70, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 70, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 70, "pcs": 2, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00016918", "nombre": "INSTITUTO NACIONAL DE SALUD NIÑO SAN BORJA", "categoria": "III-2", "num_farmacias": 6, "total_pcs": 23, "total_brecha": 0, "cumplimiento_pct": 70, "nivel": "Medio", "lat": -12.0860496, "lng": -76.9925112, "place_id": "ChIJ1bU4dMvHBZER9fSqrazdMGI", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Brecha pareja en todas sus farmacias (mismo problema estructural, ej. red o cableado).", "farmacias": [{"tipo": "Almacen", "pct": 70, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 70, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 70, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 70, "pcs": 7, "faltantes": 0, "alquiladas": 0}, {"tipo": "UCI", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00006217", "nombre": "INSTITUTO NACIONAL DE OFTALMOLOGÍA DR. FRANCISCO CONTRERAS CAMPOS", "categoria": "III-2", "num_farmacias": 6, "total_pcs": 17, "total_brecha": 10, "cumplimiento_pct": 72, "nivel": "Medio", "lat": -12.0512579, "lng": -77.0557194, "place_id": "ChIJMZ1XwdfIBZERlybRlfJyCqQ", "brecha_in_situ": 10, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Brecha pareja en todas sus farmacias (mismo problema estructural, ej. red o cableado).", "farmacias": [{"tipo": "SIS", "pct": 70, "pcs": 5, "faltantes": 2, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 70, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Clinica", "pct": 70, "pcs": 1, "faltantes": 2, "alquiladas": 0}, {"tipo": "Almacen", "pct": 70, "pcs": 4, "faltantes": 3, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 3, "faltantes": 3, "alquiladas": 0}], "brecha_relativa_pct": 59, "nivel_brecha": "Alto"}, {"cod": "00005948", "nombre": "HOSPITAL HERMILIO VALDIZAN", "categoria": "III-E", "num_farmacias": 8, "total_pcs": 20, "total_brecha": 9, "cumplimiento_pct": 76, "nivel": "Medio", "lat": -12.0466274, "lng": -76.9459305, "place_id": "ChIJ6zQkwJnGBZER4TR2hwF6IE4", "brecha_in_situ": 9, "pcs_alquiladas": 0, "diris": "Este", "mensaje_guia": "Brecha pareja en todas sus farmacias (mismo problema estructural, ej. red o cableado).", "farmacias": [{"tipo": "Consulta Externa", "pct": 70, "pcs": 5, "faltantes": 2, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 70, "pcs": 3, "faltantes": 1, "alquiladas": 0}, {"tipo": "Almacen", "pct": 70, "pcs": 1, "faltantes": 2, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 4, "faltantes": 1, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Clinica", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 80, "pcs": 3, "faltantes": 1, "alquiladas": 0}], "brecha_relativa_pct": 45, "nivel_brecha": "Medio"}, {"cod": "00006214", "nombre": "HOSPITAL VICTOR LARCO HERRERA", "categoria": "III-E", "num_farmacias": 7, "total_pcs": 14, "total_brecha": 3, "cumplimiento_pct": 79, "nivel": "Medio", "lat": -12.099055, "lng": -77.0659835, "place_id": "ChIJqVZnya_JBZERuwZWqlL1Q3k", "brecha_in_situ": 3, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Brecha pareja en todas sus farmacias (mismo problema estructural, ej. red o cableado).", "farmacias": [{"tipo": "Almacen", "pct": 70, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 80, "pcs": 3, "faltantes": 1, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalización Pedíatrica", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 3, "faltantes": 1, "alquiladas": 0}, {"tipo": "Clinica", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}], "brecha_relativa_pct": 21, "nivel_brecha": "Medio"}, {"cod": "00005883", "nombre": "HOSPITAL DE HUAYCAN", "categoria": "II-1", "num_farmacias": 6, "total_pcs": 15, "total_brecha": 15, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0157567, "lng": -76.8203021, "place_id": "ChIJ21qIiuPpBZER07GhregNY2M", "brecha_in_situ": 15, "pcs_alquiladas": 0, "diris": "Este", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Emergencia", "pct": 80, "pcs": 2, "faltantes": 2, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 80, "pcs": 2, "faltantes": 3, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 2, "faltantes": 3, "alquiladas": 0}, {"tipo": "Estrategia Sanitaria", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Clinica", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 7, "faltantes": 5, "alquiladas": 0}], "brecha_relativa_pct": 100, "nivel_brecha": "Alto"}, {"cod": "00005946", "nombre": "HOSPITAL NACIONAL HIPOLITO UNANUE", "categoria": "III-1", "num_farmacias": 14, "total_pcs": 64, "total_brecha": 20, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0401923, "lng": -76.9931772, "place_id": "ChIJpWPV6uXFBZER6KPvVftRsbk", "brecha_in_situ": 19, "pcs_alquiladas": 1, "diris": "Este", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Central", "pct": 80, "pcs": 9, "faltantes": 4, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 6, "faltantes": 3, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 11, "faltantes": 1, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 11, "faltantes": 1, "alquiladas": 0}, {"tipo": "Clinica", "pct": 80, "pcs": 3, "faltantes": 2, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 80, "pcs": 7, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 3, "faltantes": 2, "alquiladas": 0}, {"tipo": "Programa", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Programa", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Oncológica", "pct": 80, "pcs": 2, "faltantes": 2, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 1, "faltantes": 4, "alquiladas": 1}, {"tipo": "Programa", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Estrategia Sanitaria", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 31, "nivel_brecha": "Medio"}, {"cod": "00006210", "nombre": "INSTITUTO NACIONAL DE ENFERMEDADES NEOPLASICAS", "categoria": "III-2", "num_farmacias": 15, "total_pcs": 68, "total_brecha": 2, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.112488, "lng": -76.9982768, "place_id": "ChIJh9YF_wnIBZERSN-gJXf43Xc", "brecha_in_situ": 2, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Central", "pct": 80, "pcs": 8, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalización Pedíatrica", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Procedimientos", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Procedimientos", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Quimioterapia", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Quimioterapia", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Cirugía", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Endoscopía", "pct": 80, "pcs": 2, "faltantes": 2, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 31, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 3, "nivel_brecha": "Bajo"}, {"cod": "00006211", "nombre": "HOSPITAL DE APOYO SANTA ROSA", "categoria": "III-1", "num_farmacias": 9, "total_pcs": 37, "total_brecha": 11, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.071988, "lng": -77.061039, "place_id": "ChIJAeVDZhzJBZERK7Bg7olk6Tc", "brecha_in_situ": 9, "pcs_alquiladas": 2, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Almacen", "pct": 80, "pcs": 8, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 2, "faltantes": 2, "alquiladas": 0}, {"tipo": "Central", "pct": 80, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Estrategia Sanitaria", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 4, "faltantes": 2, "alquiladas": 2}, {"tipo": "Hospitalizacion", "pct": 80, "pcs": 5, "faltantes": 2, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 80, "pcs": 2, "faltantes": 3, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 80, "pcs": 7, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 30, "nivel_brecha": "Medio"}, {"cod": "00006216", "nombre": "INSTITUTO NACIONAL DE SALUD DEL NIÑO", "categoria": "III-2", "num_farmacias": 12, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.065029, "lng": -77.045856, "place_id": "ChIJ1bU4dMvHBZER9fSqrazdMGI", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "SIS", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 80, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Cirugía", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Narcoticos", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00007734", "nombre": "INSTITUTO NACIONAL DE REHABILITACION DRA. ADRIANA REBAZA FLORES - AMISTAD PERU-JAPON", "categoria": "III-E", "num_farmacias": 2, "total_pcs": 3, "total_brecha": 0, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.1920588, "lng": -77.0039936, "place_id": "ChIJySvHQty5BZERrmNV6lwrdMM", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Sur", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Centro Quirúgico", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00006206", "nombre": "HOSPITAL NACIONAL DOS DE MAYO", "categoria": "III-1", "num_farmacias": 20, "total_pcs": 58, "total_brecha": 11, "cumplimiento_pct": 80, "nivel": "Alto", "lat": -12.0567369, "lng": -77.0160596, "place_id": "ChIJC3q0pabIBZERpYJfQqnojN0", "brecha_in_situ": 11, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Hospitalizacion", "pct": 80, "pcs": 10, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 3, "faltantes": 3, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "UCI", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Estrategia Sanitaria", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Clinica", "pct": 80, "pcs": 1, "faltantes": 3, "alquiladas": 0}, {"tipo": "Oncológica", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "UCI", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 2, "faltantes": 1, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 1, "faltantes": 2, "alquiladas": 0}, {"tipo": "Oncológica", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 80, "pcs": 2, "faltantes": 1, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Nutrición Parental", "pct": 80, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 7, "faltantes": 0, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 80, "pcs": 3, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 19, "nivel_brecha": "Bajo"}, {"cod": "00006207", "nombre": "HOSPITAL NACIONAL ARZOBISPO LOAYZA", "categoria": "III-1", "num_farmacias": 8, "total_pcs": 58, "total_brecha": 1, "cumplimiento_pct": 81, "nivel": "Alto", "lat": -12.0499382, "lng": -77.043819, "place_id": "ChIJT9pxy8_IBZERnJhjZ9u2bpY", "brecha_in_situ": 1, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Almacen", "pct": 0, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Obstétrico", "pct": 90, "pcs": 6, "faltantes": 1, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 9, "faltantes": 0, "alquiladas": 0}, {"tipo": "UCI", "pct": 90, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 90, "pcs": 14, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 90, "pcs": 9, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 100, "pcs": 9, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 100, "pcs": 6, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 2, "nivel_brecha": "Bajo"}, {"cod": "00007733", "nombre": "INSTITUTO NACIONAL DE SALUD MENTAL \"HONORIO DELGADO - HIDEYO NOGUCHI\"", "categoria": "III-2", "num_farmacias": 5, "total_pcs": 19, "total_brecha": 0, "cumplimiento_pct": 82, "nivel": "Alto", "lat": -12.0208145, "lng": -77.0567883, "place_id": "ChIJWyLe9d_OBZER0oOXZEFAmVc", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Norte", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Central", "pct": 80, "pcs": 8, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 80, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 90, "pcs": 3, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00007632", "nombre": "HOSPITAL CARLOS LANFRANCO LA HOZ", "categoria": "II-2", "num_farmacias": 6, "total_pcs": 19, "total_brecha": 0, "cumplimiento_pct": 83, "nivel": "Alto", "lat": -11.8627339, "lng": -77.07952, "place_id": "ChIJlRg4YLXWBZERqOvbYnfITZU", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Norte", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Farmacotecnia", "pct": 70, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 80, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 90, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 90, "pcs": 4, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00007634", "nombre": "HOSPITAL SERGIO E. BERNALES", "categoria": "III-1", "num_farmacias": 6, "total_pcs": 23, "total_brecha": 8, "cumplimiento_pct": 83, "nivel": "Alto", "lat": -11.9138203, "lng": -77.0391782, "place_id": "ChIJO9wUQlzQBZERYTLMr8ZSeio", "brecha_in_situ": 0, "pcs_alquiladas": 8, "diris": "Norte", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Programa", "pct": 70, "pcs": 8, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 70, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 3, "faltantes": 0, "alquiladas": 2}, {"tipo": "Central", "pct": 90, "pcs": 3, "faltantes": 0, "alquiladas": 2}, {"tipo": "Dosis Unitaria", "pct": 90, "pcs": 3, "faltantes": 0, "alquiladas": 2}, {"tipo": "Centro Quirúgico", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 2}], "brecha_relativa_pct": 35, "nivel_brecha": "Medio"}, {"cod": "00005947", "nombre": "HOSPITAL DE MEDIANA COMPLEJIDAD JOSE AGURTO TELLO", "categoria": "II-2", "num_farmacias": 5, "total_pcs": 16, "total_brecha": 13, "cumplimiento_pct": 88, "nivel": "Alto", "lat": -11.934365, "lng": -76.6934592, "place_id": "ChIJ72NmTIflBZERdNe0V6EsiZU", "brecha_in_situ": 11, "pcs_alquiladas": 2, "diris": "Este", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Hospitalizacion", "pct": 80, "pcs": 3, "faltantes": 1, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 3, "faltantes": 2, "alquiladas": 1}, {"tipo": "Consulta Externa", "pct": 90, "pcs": 2, "faltantes": 2, "alquiladas": 0}, {"tipo": "Almacen", "pct": 90, "pcs": 6, "faltantes": 3, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 90, "pcs": 2, "faltantes": 3, "alquiladas": 1}], "brecha_relativa_pct": 81, "nivel_brecha": "Alto"}, {"cod": "00006209", "nombre": "INSTITUTO NACIONAL DE CIENCIAS NEUROLOGICAS", "categoria": "III-2", "num_farmacias": 4, "total_pcs": 17, "total_brecha": 2, "cumplimiento_pct": 88, "nivel": "Alto", "lat": -12.0463015, "lng": -77.0161038, "place_id": "ChIJiS_r_6vIBZERzidisIwcfpA", "brecha_in_situ": 2, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Centro Quirúgico", "pct": 80, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 90, "pcs": 12, "faltantes": 2, "alquiladas": 0}, {"tipo": "Almacen", "pct": 90, "pcs": 3, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 12, "nivel_brecha": "Bajo"}, {"cod": "00006212", "nombre": "HOSPITAL DE EMERGENCIAS PEDIATRICAS", "categoria": "III-E", "num_farmacias": 7, "total_pcs": 15, "total_brecha": 3, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0583673, "lng": -77.0216179, "place_id": "ChIJqRIwSqPIBZERvFzCuN2d7zI", "brecha_in_situ": 3, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Clinica", "pct": 90, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 90, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 90, "pcs": 1, "faltantes": 2, "alquiladas": 0}, {"tipo": "Almacen", "pct": 90, "pcs": 7, "faltantes": 1, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 20, "nivel_brecha": "Medio"}, {"cod": "00006213", "nombre": "HOSPITAL DE EMERGENCIAS JOSÉ CASIMIRO ULLOA", "categoria": "III-E", "num_farmacias": 4, "total_pcs": 15, "total_brecha": 18, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.1281188, "lng": -77.0177211, "place_id": "ChIJ4cYbQgLIBZERwjbr-R427Vg", "brecha_in_situ": 3, "pcs_alquiladas": 15, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Almacen", "pct": 90, "pcs": 4, "faltantes": 1, "alquiladas": 4}, {"tipo": "Dosis Unitaria", "pct": 90, "pcs": 6, "faltantes": 0, "alquiladas": 6}, {"tipo": "Almacen", "pct": 90, "pcs": 4, "faltantes": 2, "alquiladas": 4}, {"tipo": "Centro Quirúgico", "pct": 90, "pcs": 1, "faltantes": 0, "alquiladas": 1}], "brecha_relativa_pct": 120, "nivel_brecha": "Alto"}, {"cod": "00006215", "nombre": "HOSPITAL NACIONAL DOCENTE MADRE NIÑO SAN BARTOLOME", "categoria": "III-E", "num_farmacias": 8, "total_pcs": 49, "total_brecha": 0, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0497615, "lng": -77.0420353, "place_id": "ChIJB3-lAc_IBZERTzGIhlNDKYU", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Emergencia", "pct": 90, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 90, "pcs": 7, "faltantes": 0, "alquiladas": 0}, {"tipo": "Hospitalizacion", "pct": 90, "pcs": 10, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Nutrición Parental", "pct": 90, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Clinica", "pct": 90, "pcs": 4, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 90, "pcs": 14, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00007633", "nombre": "HOSPITAL NACIONAL CAYETANO HEREDIA", "categoria": "III-1", "num_farmacias": 8, "total_pcs": 50, "total_brecha": 1, "cumplimiento_pct": 90, "nivel": "Alto", "lat": -12.0222989, "lng": -77.0556524, "place_id": "ChIJB9ivWSDPBZERfkU563J8hxU", "brecha_in_situ": 1, "pcs_alquiladas": 0, "diris": "Norte", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Emergencia", "pct": 90, "pcs": 10, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 90, "pcs": 12, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 90, "pcs": 8, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 90, "pcs": 10, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 90, "pcs": 0, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Quirúgico", "pct": 90, "pcs": 3, "faltantes": 1, "alquiladas": 0}, {"tipo": "Farmacotecnia", "pct": 90, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Oncológica", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 2, "nivel_brecha": "Bajo"}, {"cod": "00006208", "nombre": "INSTITUTO NACIONAL MATERNO PERINATAL", "categoria": "III-2", "num_farmacias": 11, "total_pcs": 34, "total_brecha": 0, "cumplimiento_pct": 98, "nivel": "Alto", "lat": -12.0527686, "lng": -77.0221638, "place_id": "ChIJU3B8srrIBZER4uMp-nX2egY", "brecha_in_situ": 0, "pcs_alquiladas": 0, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Centro Quirúgico", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Clinica", "pct": 90, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Consulta Externa", "pct": 100, "pcs": 3, "faltantes": 0, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 100, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Centro Obstétrico", "pct": 100, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 100, "pcs": 7, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 100, "pcs": 10, "faltantes": 0, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 100, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Administrativo", "pct": 100, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Nutrición Parental", "pct": 100, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Narcoticos", "pct": 100, "pcs": 1, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 0, "nivel_brecha": "Bajo"}, {"cod": "00005617", "nombre": "HOSPITAL SAN JUAN DE LURIGANCHO", "categoria": "II-2", "num_farmacias": 10, "total_pcs": 34, "total_brecha": 4, "cumplimiento_pct": 100, "nivel": "Alto", "lat": -11.9663244, "lng": -77.0034769, "place_id": "ChIJOzET8lvFBZERLFmccmeQgQs", "brecha_in_situ": 1, "pcs_alquiladas": 3, "diris": "Centro", "mensaje_guia": "Buen desempeño general, consistente en la mayoría de sus farmacias.", "farmacias": [{"tipo": "Administrativo", "pct": 100, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 100, "pcs": 2, "faltantes": 0, "alquiladas": 0}, {"tipo": "Almacen", "pct": 100, "pcs": 9, "faltantes": 0, "alquiladas": 1}, {"tipo": "Farmacotecnia", "pct": 100, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Central", "pct": 100, "pcs": 5, "faltantes": 0, "alquiladas": 0}, {"tipo": "Dosis Unitaria", "pct": 100, "pcs": 4, "faltantes": 0, "alquiladas": 1}, {"tipo": "Clinica", "pct": 100, "pcs": 1, "faltantes": 0, "alquiladas": 0}, {"tipo": "Oncológica", "pct": 100, "pcs": 1, "faltantes": 0, "alquiladas": 1}, {"tipo": "Centro Quirúgico", "pct": 100, "pcs": 1, "faltantes": 1, "alquiladas": 0}, {"tipo": "Emergencia", "pct": 100, "pcs": 5, "faltantes": 0, "alquiladas": 0}], "brecha_relativa_pct": 12, "nivel_brecha": "Bajo"}];
 
-const mapa = L.map('mapa').setView([-12.05, -77.02], 11);
+// --- KPIs principales ---
+const totalFarmacias = HOSPITALES.reduce((s,h) => s + h.num_farmacias, 0);
+const totalPCs = HOSPITALES.reduce((s,h) => s + h.total_pcs, 0);
+const totalBrecha = HOSPITALES.reduce((s,h) => s + h.total_brecha, 0);
+const totalInSitu = HOSPITALES.reduce((s,h) => s + h.brecha_in_situ, 0);
+const totalAlquiladas = HOSPITALES.reduce((s,h) => s + h.pcs_alquiladas, 0);
+const cumplimientoProm = Math.round(HOSPITALES.reduce((s,h) => s + h.cumplimiento_pct, 0) / HOSPITALES.length);
+const conteoNiveles = { Alto: 0, Medio: 0, Bajo: 0 };
+HOSPITALES.forEach(h => conteoNiveles[h.nivel_brecha]++);
+
+document.getElementById('kpiGrid').innerHTML = `
+  <div class="kpi-card"><div class="num">${HOSPITALES.length}</div><div class="lbl">IPRESS</div></div>
+  <div class="kpi-card"><div class="num">${totalFarmacias}</div><div class="lbl">Farmacias</div></div>
+  <div class="kpi-card"><div class="num">${totalPCs}</div><div class="lbl">Computadoras</div></div>
+  <div class="kpi-card"><div class="num" style="color:var(--rojo-crit);">${totalInSitu}</div><div class="lbl">PCs faltantes</div></div>
+  <div class="kpi-card"><div class="num" style="color:var(--ambar);">${totalAlquiladas}</div><div class="lbl">PCs alquiladas</div></div>
+  <div class="kpi-card"><div class="num">${totalBrecha}</div><div class="lbl">PCs necesarias (Brecha actual)</div></div>
+  <div class="kpi-card"><div class="num">${conteoNiveles.Alto} / ${conteoNiveles.Medio} / ${conteoNiveles.Bajo}</div><div class="lbl">Brecha Alta/Media/Baja (IPRESS)</div></div>
+`;
+
+// Límites de Lima Metropolitana (con margen) — impide alejarse a otras regiones
+const limitesLima = L.latLngBounds(
+  L.latLng(-12.55, -77.35),  // esquina suroeste
+  L.latLng(-11.65, -76.55)   // esquina noreste
+);
+
+const mapa = L.map('mapa', {
+  maxBounds: limitesLima,
+  maxBoundsViscosity: 1.0,
+  minZoom: 10,
+}).setView([-12.05, -77.02], 11);
+mapa.setMaxBounds(limitesLima);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 18,
 }).addTo(mapa);
 
-function colorPorNivel(nivel){
-  if(nivel === 'Alto') return '#1E7A46';
-  if(nivel === 'Medio') return '#B3401A';
-  return '#B3261E';
+function colorPorNivel(nivelBrecha){
+  if(nivelBrecha === 'Alto') return '#B3261E';
+  if(nivelBrecha === 'Medio') return '#E68A2E';
+  return '#1E7A46';
 }
 
 const marcadores = {};
 
 HOSPITALES.forEach(h => {
-  const color = colorPorNivel(h.nivel);
+  const color = colorPorNivel(h.nivel_brecha);
   const marker = L.circleMarker([h.lat, h.lng], {
     radius: 9,
     fillColor: color,
@@ -113,13 +223,24 @@ HOSPITALES.forEach(h => {
     fillOpacity: 0.9,
   }).addTo(mapa);
 
+  const listaFarmacias = h.farmacias.map(fm => {
+    const colorFm = fm.pct >= 80 ? '#1E7A46' : (fm.pct >= 50 ? '#B3401A' : '#B3261E');
+    const fal = fm.faltantes + fm.alquiladas;
+    return `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #f0f0f0;">
+      <span>${fm.tipo}</span><span style="font-weight:700; color:${colorFm};">${fm.pct}% <span style="font-weight:400; color:var(--gris);">(Act: ${fm.pcs}, Fal: ${fal})</span></span>
+    </div>`;
+  }).join('');
+
   marker.bindPopup(`
     <div class="popup-hospital">
       <h3>${h.nombre}</h3>
-      <div class="pct" style="color:${color};">${h.cumplimiento_pct}%</div>
+      <div class="pct" style="color:${color};">${h.brecha_relativa_pct}% <span style="font-size:12px; font-weight:400; color:var(--gris);">brecha</span></div>
       <div class="detalle">
-        Categoría ${h.categoria} · ${h.num_farmacias} farmacias · ${h.total_pcs} PCs<br>
-        Brecha total: ${h.total_brecha} PCs
+        Categoría ${h.categoria} · ${h.num_farmacias} farmacias · ${h.total_pcs} PCs actuales · Cumplimiento: ${h.cumplimiento_pct}%<br>
+        Necesita <b>${h.total_brecha} PCs adicionales</b> para operar bien (${h.brecha_in_situ} faltantes · ${h.pcs_alquiladas} alquiladas)
+      </div>
+      <div style="margin-top:8px; max-height:150px; overflow-y:auto; font-size:11.5px;">
+        ${listaFarmacias}
       </div>
     </div>
   `);
@@ -129,30 +250,115 @@ HOSPITALES.forEach(h => {
 
 // Tabla + interacción click -> abre popup en el mapa
 const tbody = document.getElementById('tbodyHospitales');
-const hospitalesOrdenados = [...HOSPITALES].sort((a, b) => a.cumplimiento_pct - b.cumplimiento_pct);
+let ordenCampo = 'nombre';
+let ordenAsc = true;
 
-tbody.innerHTML = hospitalesOrdenados.map(h => {
-  const nivelClase = h.nivel.toLowerCase();
-  return `
-    <tr data-cod="${h.cod}">
-      <td><b>${h.nombre}</b></td>
-      <td>${h.categoria}</td>
-      <td>${h.num_farmacias}</td>
-      <td>${h.total_pcs}</td>
-      <td><span class="badge-nivel ${nivelClase}">${h.cumplimiento_pct}% · ${h.nivel}</span></td>
-    </tr>`;
-}).join('');
+function renderTablaHospitales(){
+  const filtroDiris = document.getElementById('filtroDiris').value;
 
-tbody.querySelectorAll('tr').forEach(row => {
-  row.addEventListener('click', () => {
-    const cod = row.dataset.cod;
-    const marker = marcadores[cod];
-    if(marker){
-      mapa.setView(marker.getLatLng(), 14);
-      marker.openPopup();
+  let filtrados = HOSPITALES.filter(h => filtroDiris === 'TODOS' || h.diris === filtroDiris);
+
+  filtrados.sort((a, b) => {
+    let va = a[ordenCampo], vb = b[ordenCampo];
+    if(typeof va === 'string') va = va.toLowerCase();
+    if(typeof vb === 'string') vb = vb.toLowerCase();
+    if(va < vb) return ordenAsc ? -1 : 1;
+    if(va > vb) return ordenAsc ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('contadorResultados').textContent = filtrados.length + ' hospital(es)';
+
+  tbody.innerHTML = filtrados.map(h => {
+    const nivelClase = h.nivel.toLowerCase();
+    const filasFarmacias = h.farmacias.map(fm => {
+      const colorFm = fm.pct >= 80 ? 'var(--verde-ok)' : (fm.pct >= 50 ? 'var(--ambar)' : 'var(--rojo-crit)');
+      return `
+        <tr>
+          <td style="padding-left:24px;">${fm.tipo}</td>
+          <td>${fm.pcs}</td>
+          <td style="color:${fm.faltantes > 0 ? 'var(--rojo-crit)' : 'var(--gris)'};">${fm.faltantes}</td>
+          <td style="color:${fm.alquiladas > 0 ? 'var(--ambar)' : 'var(--gris)'};">${fm.alquiladas}</td>
+          <td style="color:${colorFm}; font-weight:600;">${fm.pct}%</td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <tr data-cod="${h.cod}">
+        <td><span class="tag-diris">${h.diris}</span></td>
+        <td><b>${h.nombre}</b></td>
+        <td>${h.categoria}</td>
+        <td>${h.num_farmacias}</td>
+        <td>${h.total_pcs}</td>
+        <td style="color:${h.brecha_in_situ > 0 ? 'var(--rojo-crit)' : 'var(--gris)'};">${h.brecha_in_situ}</td>
+        <td style="color:${h.pcs_alquiladas > 0 ? 'var(--ambar)' : 'var(--gris)'};">${h.pcs_alquiladas}</td>
+        <td><button type="button" class="btn-detalle" data-toggle="${h.cod}">▸ Ver</button></td>
+      </tr>
+      <tr class="fila-detalle" id="detalle-${h.cod}" style="display:none;">
+        <td colspan="8" style="padding:0;">
+          <table class="tabla-mini">
+            <thead>
+              <tr><th style="padding-left:24px;">Farmacia</th><th>PCs actuales</th><th>PCs faltantes</th><th>PCs alquiladas</th><th>Cumplimiento</th></tr>
+            </thead>
+            <tbody>${filasFarmacias}</tbody>
+          </table>
+        </td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.btn-detalle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cod = btn.dataset.toggle;
+      const filaDetalle = document.getElementById('detalle-' + cod);
+      const abierta = filaDetalle.style.display !== 'none';
+      filaDetalle.style.display = abierta ? 'none' : 'table-row';
+      btn.textContent = abierta ? '▸ Ver' : '▾ Ocultar';
+    });
+  });
+
+  tbody.querySelectorAll('tr[data-cod]').forEach(row => {
+    row.addEventListener('click', () => {
+      const cod = row.dataset.cod;
+      const marker = marcadores[cod];
+      if(marker){
+        mapa.setView(marker.getLatLng(), 14);
+        marker.openPopup();
+      }
+    });
+  });
+}
+
+// Encabezados clicables: ordenan por esa columna, alternando ascendente/descendente
+document.querySelectorAll('th.ordenable').forEach(th => {
+  th.addEventListener('click', () => {
+    const campo = th.dataset.campo;
+    if(ordenCampo === campo){
+      ordenAsc = !ordenAsc;
+    } else {
+      ordenCampo = campo;
+      ordenAsc = true;
     }
+    document.querySelectorAll('.flecha-orden').forEach(f => f.textContent = '');
+    th.querySelector('.flecha-orden').textContent = ordenAsc ? '▲' : '▼';
+    renderTablaHospitales();
   });
 });
+
+renderTablaHospitales();
+
+// --- Ranking de tipos de farmacia más críticos (Lima) ---
+const RANKING_TIPOS = [{"tipo": "Nutrición Parental", "promedio": 68, "n": 4}, {"tipo": "Oncológica", "promedio": 73, "n": 7}, {"tipo": "SIS", "promedio": 75, "n": 2}, {"tipo": "Estrategia Sanitaria", "promedio": 78, "n": 5}, {"tipo": "Programa", "promedio": 78, "n": 5}, {"tipo": "Hospitalizacion", "promedio": 78, "n": 12}, {"tipo": "Almacen", "promedio": 80, "n": 33}, {"tipo": "Psiquiatria", "promedio": 80, "n": 1}, {"tipo": "UCI", "promedio": 80, "n": 4}, {"tipo": "Hospitalización Pedíatrica", "promedio": 80, "n": 2}, {"tipo": "Procedimientos", "promedio": 80, "n": 2}, {"tipo": "Quimioterapia", "promedio": 80, "n": 2}, {"tipo": "Cirugía", "promedio": 80, "n": 2}, {"tipo": "Endoscopía", "promedio": 80, "n": 1}, {"tipo": "Farmacotecnia", "promedio": 82, "n": 17}, {"tipo": "Clinica", "promedio": 82, "n": 12}, {"tipo": "Centro Quirúgico", "promedio": 83, "n": 18}, {"tipo": "Consulta Externa", "promedio": 83, "n": 13}, {"tipo": "Central", "promedio": 84, "n": 14}, {"tipo": "Emergencia", "promedio": 84, "n": 28}, {"tipo": "Dosis Unitaria", "promedio": 86, "n": 15}, {"tipo": "Administrativo", "promedio": 87, "n": 10}, {"tipo": "Centro Obstétrico", "promedio": 90, "n": 3}, {"tipo": "Narcoticos", "promedio": 90, "n": 2}];
+
+document.getElementById('rankingTipos').innerHTML = RANKING_TIPOS.map(r => {
+  const color = r.promedio >= 80 ? '#1E7A46' : (r.promedio >= 50 ? '#B3401A' : '#B3261E');
+  return `
+    <div class="fila-tipo">
+      <div class="nombre-tipo">${r.tipo}</div>
+      <div class="barra-bg-tipo"><div class="barra-fill-tipo" style="width:${r.promedio}%; background:${color};"></div></div>
+      <div class="valor-tipo">${r.promedio}% (n=${r.n})</div>
+    </div>`;
+}).join('');
 </script>
 </body>
 </html>
