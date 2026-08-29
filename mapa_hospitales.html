@@ -92,6 +92,27 @@
   }
   .tabla-mini tbody td{padding:6px 10px; border-bottom:1px solid #eef0f0;}
   .tabla-mini tbody tr:last-child td{border-bottom:none;}
+
+  .graficos-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:20px;}
+  .panel-grafico{margin-bottom:0;}
+  .panel-grafico h2{margin-bottom:14px;}
+
+  .dona-leyenda{display:flex; flex-direction:column; gap:8px; font-size:12.5px;}
+  .dona-leyenda .item-dona{display:flex; align-items:center; gap:8px;}
+  .dona-leyenda .punto-dona{width:10px; height:10px; border-radius:50%; flex:0 0 auto;}
+  .dona-leyenda b{margin-left:auto;}
+
+  .barra-diris-fila{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .barra-diris-fila .label-diris{width:60px; flex:0 0 auto; font-size:12.5px; font-weight:600;}
+  .barra-diris-fila .barra-bg-diris{flex:1; height:20px; background:#f0f4f5; border-radius:4px; overflow:hidden;}
+  .barra-diris-fila .barra-fill-diris{height:100%; border-radius:4px; background:var(--azul-claro); display:flex; align-items:center; justify-content:flex-end; padding-right:6px; box-sizing:border-box;}
+  .barra-diris-fila .valor-diris{font-size:11px; color:#fff; font-weight:700;}
+
+  .barra-top-fila{margin-bottom:12px;}
+  .barra-top-fila .nombre-top{font-size:12px; margin-bottom:4px; color:#1a1a1a;}
+  .barra-top-fila .barra-bg-top{height:18px; background:#f0f4f5; border-radius:4px; overflow:hidden;}
+  .barra-top-fila .barra-fill-top{height:100%; border-radius:4px; display:flex; align-items:center; padding-left:6px; box-sizing:border-box;}
+  .barra-top-fila .valor-top{font-size:11px; color:#fff; font-weight:700;}
 </style>
 </head>
 <body>
@@ -116,6 +137,23 @@
     <div class="item"><span class="punto" style="background:#B3261E;"></span> Brecha Alta (≥51%)</div>
     <div class="item"><span class="punto" style="background:#E68A2E;"></span> Brecha Media (20–50%)</div>
     <div class="item"><span class="punto" style="background:#1E7A46;"></span> Brecha Baja (&lt;20%)</div>
+  </div>
+
+  <div class="graficos-grid">
+    <div class="panel-tabla panel-grafico">
+      <h2>Distribución por nivel de brecha</h2>
+      <div id="graficoDona"></div>
+    </div>
+    <div class="panel-tabla panel-grafico">
+      <h2>Brecha total por DIRIS</h2>
+      <div id="graficoDiris"></div>
+    </div>
+  </div>
+
+  <div class="panel-tabla">
+    <h2>Top IPRESS con mayor brecha relativa</h2>
+    <p class="sub-panel">Las 8 IPRESS con mayor % de PCs adicionales necesarias respecto a su parque actual</p>
+    <div id="graficoTop"></div>
   </div>
 
   <div id="mapa"></div>
@@ -148,12 +186,6 @@
       </thead>
       <tbody id="tbodyHospitales"></tbody>
     </table>
-  </div>
-
-  <div class="panel-tabla">
-    <h2>Tipos de farmacia más críticos (Lima)</h2>
-    <p class="sub-panel">Cumplimiento promedio de las 214 farmacias evaluadas, agrupadas por tipo — independientemente de la IPRESS. Un tipo consistentemente bajo en todas las IPRESS sugiere una política de compra específica por servicio, no solo por hospital.</p>
-    <div id="rankingTipos"></div>
   </div>
 
   <p class="nota">
@@ -347,18 +379,93 @@ document.querySelectorAll('th.ordenable').forEach(th => {
 
 renderTablaHospitales();
 
-// --- Ranking de tipos de farmacia más críticos (Lima) ---
-const RANKING_TIPOS = [{"tipo": "Nutrición Parental", "promedio": 68, "n": 4}, {"tipo": "Oncológica", "promedio": 73, "n": 7}, {"tipo": "SIS", "promedio": 75, "n": 2}, {"tipo": "Estrategia Sanitaria", "promedio": 78, "n": 5}, {"tipo": "Programa", "promedio": 78, "n": 5}, {"tipo": "Hospitalizacion", "promedio": 78, "n": 12}, {"tipo": "Almacen", "promedio": 80, "n": 33}, {"tipo": "Psiquiatria", "promedio": 80, "n": 1}, {"tipo": "UCI", "promedio": 80, "n": 4}, {"tipo": "Hospitalización Pedíatrica", "promedio": 80, "n": 2}, {"tipo": "Procedimientos", "promedio": 80, "n": 2}, {"tipo": "Quimioterapia", "promedio": 80, "n": 2}, {"tipo": "Cirugía", "promedio": 80, "n": 2}, {"tipo": "Endoscopía", "promedio": 80, "n": 1}, {"tipo": "Farmacotecnia", "promedio": 82, "n": 17}, {"tipo": "Clinica", "promedio": 82, "n": 12}, {"tipo": "Centro Quirúgico", "promedio": 83, "n": 18}, {"tipo": "Consulta Externa", "promedio": 83, "n": 13}, {"tipo": "Central", "promedio": 84, "n": 14}, {"tipo": "Emergencia", "promedio": 84, "n": 28}, {"tipo": "Dosis Unitaria", "promedio": 86, "n": 15}, {"tipo": "Administrativo", "promedio": 87, "n": 10}, {"tipo": "Centro Obstétrico", "promedio": 90, "n": 3}, {"tipo": "Narcoticos", "promedio": 90, "n": 2}];
+// --- Gráfico A: distribución por nivel de brecha (dona SVG) ---
+(function(){
+  const datos = [
+    { label: 'Alta', valor: conteoNiveles.Alto, color: '#B3261E' },
+    { label: 'Media', valor: conteoNiveles.Medio, color: '#E68A2E' },
+    { label: 'Baja', valor: conteoNiveles.Bajo, color: '#1E7A46' },
+  ];
+  const total = datos.reduce((s,d) => s + d.valor, 0);
+  const R = 60, CX = 70, CY = 70, GROSOR = 22;
+  const circ = 2 * Math.PI * R;
+  let acumulado = 0;
 
-document.getElementById('rankingTipos').innerHTML = RANKING_TIPOS.map(r => {
-  const color = r.promedio >= 80 ? '#1E7A46' : (r.promedio >= 50 ? '#B3401A' : '#B3261E');
-  return `
-    <div class="fila-tipo">
-      <div class="nombre-tipo">${r.tipo}</div>
-      <div class="barra-bg-tipo"><div class="barra-fill-tipo" style="width:${r.promedio}%; background:${color};"></div></div>
-      <div class="valor-tipo">${r.promedio}% (n=${r.n})</div>
+  let svg = `<div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+    <svg width="140" height="140" viewBox="0 0 140 140">`;
+  datos.forEach(d => {
+    const frac = total > 0 ? d.valor / total : 0;
+    const largo = frac * circ;
+    const offset = -acumulado * circ;
+    svg += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${d.color}" stroke-width="${GROSOR}"
+      stroke-dasharray="${largo} ${circ - largo}" stroke-dashoffset="${offset}" transform="rotate(-90 ${CX} ${CY})"/>`;
+    acumulado += frac;
+  });
+  svg += `<text x="${CX}" y="${CY+5}" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1a1a">${total}</text>`;
+  svg += `</svg>`;
+
+  svg += `<div class="dona-leyenda">`;
+  datos.forEach(d => {
+    svg += `<div class="item-dona"><span class="punto-dona" style="background:${d.color};"></span>${d.label} <b>${d.valor}</b></div>`;
+  });
+  svg += `</div></div>`;
+
+  document.getElementById('graficoDona').innerHTML = svg;
+})();
+
+// --- Gráfico B: brecha total por DIRIS (barras apiladas: faltantes vs alquiladas) ---
+(function(){
+  const porDiris = {};
+  HOSPITALES.forEach(h => {
+    if(!porDiris[h.diris]) porDiris[h.diris] = { faltantes: 0, alquiladas: 0 };
+    porDiris[h.diris].faltantes += h.brecha_in_situ;
+    porDiris[h.diris].alquiladas += h.pcs_alquiladas;
+  });
+  const totales = {};
+  Object.keys(porDiris).forEach(d => totales[d] = porDiris[d].faltantes + porDiris[d].alquiladas);
+  const maxVal = Math.max(...Object.values(totales), 1);
+
+  const html = Object.keys(porDiris).sort((a,b) => totales[b] - totales[a]).map(diris => {
+    const { faltantes, alquiladas } = porDiris[diris];
+    const total = faltantes + alquiladas;
+    const pctFalt = Math.round((faltantes / maxVal) * 100);
+    const pctAlq = Math.round((alquiladas / maxVal) * 100);
+    return `
+      <div class="barra-diris-fila">
+        <div class="label-diris">${diris}</div>
+        <div class="barra-bg-diris" style="display:flex;">
+          ${faltantes > 0 ? `<div class="barra-fill-diris" style="width:${pctFalt}%; background:var(--rojo-crit); border-radius:4px 0 0 4px;"><span class="valor-diris">${faltantes}</span></div>` : ''}
+          ${alquiladas > 0 ? `<div class="barra-fill-diris" style="width:${pctAlq}%; background:var(--ambar); border-radius:${faltantes > 0 ? '0 4px 4px 0' : '4px'};"><span class="valor-diris">${alquiladas}</span></div>` : ''}
+        </div>
+        <div style="width:34px; text-align:right; font-size:12px; font-weight:700; color:#1a1a1a;">${total}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('graficoDiris').innerHTML = html + `
+    <div style="display:flex; gap:16px; margin-top:6px; font-size:11.5px; color:var(--gris);">
+      <div><span style="display:inline-block; width:9px; height:9px; background:var(--rojo-crit); border-radius:2px; margin-right:4px;"></span>PCs faltantes</div>
+      <div><span style="display:inline-block; width:9px; height:9px; background:var(--ambar); border-radius:2px; margin-right:4px;"></span>PCs alquiladas</div>
     </div>`;
-}).join('');
+})();
+
+// --- Gráfico C: Top IPRESS con mayor brecha relativa ---
+(function(){
+  const top = [...HOSPITALES].sort((a,b) => b.brecha_relativa_pct - a.brecha_relativa_pct).slice(0, 8);
+  const maxVal = Math.max(...top.map(h => h.brecha_relativa_pct), 1);
+
+  const html = top.map(h => {
+    const pct = Math.round((h.brecha_relativa_pct / maxVal) * 100);
+    const color = colorPorNivel(h.nivel_brecha);
+    const nombreCorto = h.nombre.length > 40 ? h.nombre.substring(0,38) + '…' : h.nombre;
+    return `
+      <div class="barra-top-fila">
+        <div class="nombre-top">${nombreCorto}</div>
+        <div class="barra-bg-top"><div class="barra-fill-top" style="width:${pct}%; background:${color};"><span class="valor-top">${h.brecha_relativa_pct}%</span></div></div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('graficoTop').innerHTML = html;
+})();
 </script>
 </body>
 </html>
