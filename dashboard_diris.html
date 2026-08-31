@@ -54,6 +54,16 @@
   }
   .btn-descargar:hover{opacity:.9;}
 
+  .filtro-categoria-wrap{
+    display:flex; align-items:center; gap:10px; margin-bottom:18px; padding:12px 16px;
+    background:var(--panel); border:1px solid var(--borde); border-radius:10px;
+  }
+  .filtro-categoria-wrap label{font-size:13px; font-weight:600; color:var(--azul-inst); white-space:nowrap;}
+  .filtro-categoria-wrap select{
+    padding:8px 12px; border:1px solid var(--borde); border-radius:6px; font-size:13px; font-family:inherit;
+    background:#fff; cursor:pointer;
+  }
+
   table{width:100%; border-collapse:collapse; font-size:13px;}
   thead th{
     text-align:left; padding:8px 10px; background:#f4f8fb; color:var(--azul-inst);
@@ -80,6 +90,30 @@
   .fila-brecha .barra-mini{height:5px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:4px;}
   .fila-brecha .barra-mini-fill{height:100%; background:var(--rojo-crit); border-radius:3px;}
   .brechas-scroll{max-height:260px; overflow-y:auto;}
+
+  .kpi-grid-brecha{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;}
+  .kpi-card-brecha{background:#f7f9fa; border-radius:10px; padding:14px; text-align:center;}
+  .kpi-card-brecha .num{font-size:22px; font-weight:700; color:var(--azul-inst);}
+  .kpi-card-brecha .lbl{font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.3px; margin-top:4px;}
+
+  .barra-diris-brecha-fila{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .barra-diris-brecha-fila .label-diris-b{width:100px; flex:0 0 auto; font-size:12.5px; font-weight:600;}
+  .barra-diris-brecha-fila .barra-bg-b{flex:1; height:20px; background:#f0f4f5; border-radius:4px; overflow:hidden;}
+  .barra-diris-brecha-fila .barra-fill-b{height:100%; border-radius:4px; display:flex; align-items:center; padding-left:6px; box-sizing:border-box;}
+  .barra-diris-brecha-fila .valor-b{font-size:11px; color:#fff; font-weight:700;}
+
+  .barra-top-brecha-fila{margin-bottom:12px;}
+  .barra-top-brecha-fila .nombre-tb{font-size:12px; margin-bottom:4px; color:#1a1a1a;}
+  .barra-top-brecha-fila .barra-bg-tb{height:18px; background:#f0f4f5; border-radius:4px; overflow:hidden;}
+  .barra-top-brecha-fila .barra-fill-tb{height:100%; border-radius:4px; background:var(--rojo-crit); display:flex; align-items:center; padding-left:6px; box-sizing:border-box;}
+  .barra-top-brecha-fila .valor-tb{font-size:11px; color:#fff; font-weight:700;}
+
+  .panel-alerta{background:#FFF8E8; border:1px solid #F0D896; border-radius:12px; padding:20px 22px; margin-bottom:20px;}
+  .panel-alerta h2{font-size:15px; margin:0 0 4px; color:var(--ambar);}
+  .panel-alerta .sub{font-size:12px; color:#8a6d1f; margin:0 0 14px;}
+  .fila-no-reconocido{background:#fff; border:1px solid #F0D896; border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:12.5px;}
+  .fila-no-reconocido b{color:var(--azul-inst);}
+  .fila-no-reconocido .cod-invalido{font-family:monospace; background:#FBEAEA; color:var(--rojo-crit); padding:1px 6px; border-radius:4px; font-weight:700;}
 </style>
 </head>
 <body>
@@ -101,9 +135,33 @@
   <div id="estadoCarga" class="estado">Cargando datos del Google Sheet...</div>
 
   <div id="contenido" style="display:none;">
+    <div class="filtro-categoria-wrap">
+      <label for="filtroCategoria">Filtrar por categoría:</label>
+      <select id="filtroCategoria" onchange="aplicarFiltroCategoria()">
+        <option value="TODAS">Todas las categorías</option>
+        <option value="I-1">I-1</option>
+        <option value="I-2">I-2</option>
+        <option value="I-3">I-3</option>
+        <option value="I-4">I-4</option>
+      </select>
+    </div>
+
     <div class="grid-diris" id="gridDiris"></div>
 
     <div class="resumen-total" id="resumenTotal"></div>
+
+    <div class="panel-ranking">
+      <h2>💻 Resultados de la Brecha</h2>
+      <p class="sub">PCs actuales vs. PCs faltantes, según lo registrado en las farmacias de las IPRESS ya diagnosticadas.</p>
+      <div class="kpi-grid-brecha" id="kpiBrecha"></div>
+      <div id="graficoBrechaDiris" style="margin-top:16px;"></div>
+    </div>
+
+    <div class="panel-ranking">
+      <h2>📌 IPRESS con mayor brecha</h2>
+      <p class="sub">Las 8 IPRESS registradas con más PCs faltantes (compra de equipos requerida)</p>
+      <div id="graficoTopBrecha"></div>
+    </div>
 
     <div class="panel-ranking">
       <h2>📉 Brechas más comunes</h2>
@@ -214,14 +272,50 @@ function calcularPorDiris(){
   const resumen = {};
   Object.keys(DIRIS_LABELS).forEach(k => resumen[k] = { total: 0, llenadas: 0 });
 
+  const categoriaActiva = document.getElementById('filtroCategoria').value;
+
   BASE_IPRESS.forEach(item => {
     const d = item.disa;
     if(!resumen[d]) return;
+    if(categoriaActiva !== 'TODAS' && item.c !== categoriaActiva) return;
     resumen[d].total++;
     if(renipressRegistrados.has(item.r)) resumen[d].llenadas++;
   });
 
+  // Registros con RENIPRESS no reconocido en la base local: se asignan a su DIRIS
+  // usando el campo DISA que el propio formulario guardó al momento del registro.
+  const codigosBase = new Set(BASE_IPRESS.map(item => item.r));
+  registrosCompletos.forEach(reg => {
+    const cod = String(reg.RENIPRESS).trim();
+    if(codigosBase.has(cod)) return; // ya se contó arriba
+    if(!renipressRegistrados.has(cod)) return; // sin información real de farmacia
+    if(categoriaActiva !== 'TODAS' && reg.CATEGORIA !== categoriaActiva) return;
+    const d = reg.DISA;
+    if(!resumen[d]) return; // DISA no reconocida tampoco: no se puede asignar
+    resumen[d].total++;
+    resumen[d].llenadas++;
+  });
+
   return resumen;
+}
+
+function aplicarFiltroCategoria(){
+  renderDashboard();
+}
+
+function contarNoReconocidosConDatos(){
+  const disaPorRenipress = {};
+  BASE_IPRESS.forEach(item => { disaPorRenipress[item.r] = true; });
+  const categoriaActiva = document.getElementById('filtroCategoria').value;
+
+  return registrosCompletos.filter(reg => {
+    const cod = String(reg.RENIPRESS).trim();
+    if(disaPorRenipress[cod]) return false; // ya está en la base local, no es "no reconocido"
+    if(!renipressRegistrados.has(cod)) return false; // sin información real de farmacia
+    if(categoriaActiva !== 'TODAS' && reg.CATEGORIA !== categoriaActiva) return false;
+    if(DIRIS_LABELS[reg.DISA]) return false; // ya se asignó a su DIRIS por el campo DISA propio
+    return true;
+  }).length;
 }
 
 function renderDashboard(){
@@ -261,14 +355,21 @@ function renderDashboard(){
     grid.appendChild(card);
   });
 
+  // Sumar registros válidos cuyo RENIPRESS no coincide con la base local
+  // (se cuentan como registradas, ya que la base local puede estar incompleta)
+  const noReconocidos = contarNoReconocidosConDatos();
+  sumaTotal += noReconocidos;
+  sumaLlenadas += noReconocidos;
+
   const pctTotal = sumaTotal > 0 ? Math.round((sumaLlenadas / sumaTotal) * 100) : 0;
   document.getElementById('resumenTotal').innerHTML = `
     <div class="item"><div class="num">${pctTotal}%</div><div class="lbl">Avance total Lima</div></div>
     <div class="item"><div class="num">${sumaLlenadas}</div><div class="lbl">IPRESS registradas</div></div>
     <div class="item"><div class="num">${sumaTotal - sumaLlenadas}</div><div class="lbl">IPRESS pendientes</div></div>
-    <div class="item"><div class="num">${sumaTotal}</div><div class="lbl">Total IPRESS (4 DIRIS)</div></div>
+    <div class="item"><div class="num">${sumaTotal}</div><div class="lbl">Total IPRESS</div></div>
   `;
 
+  renderResultadosBrecha();
   renderRankingBrechas();
   renderTabla();
 }
@@ -289,12 +390,94 @@ const CRITERIOS_BRECHA = [
   { col: 'Q_PRESUPUESTO_NIVELAR', texto: 'No tiene presupuesto para nivelar el equipamiento mínimo' },
 ];
 
+// --- Resultados de la Brecha (PCs actuales vs. faltantes por farmacia) ---
+function calcularBrechaPorRegistro(reg){
+  let actuales = 0, faltantes = 0;
+  for(let n = 1; n <= 5; n++){
+    if(!reg['NOMBRE_FARMACIA_' + n]) continue;
+    actuales += parseFloat(reg['CANT_PCS_' + n]) || 0;
+    faltantes += parseFloat(reg['CANT_PCS_FALTANTES_' + n]) || 0;
+  }
+  return { actuales, faltantes };
+}
+
+function renderResultadosBrecha(){
+  const categoriaActiva = document.getElementById('filtroCategoria').value;
+  const disaPorRenipress = {};
+  BASE_IPRESS.forEach(item => { disaPorRenipress[item.r] = item; });
+
+  const registrosFiltrados = registrosCompletos.filter(reg => {
+    if(categoriaActiva !== 'TODAS' && reg.CATEGORIA !== categoriaActiva) return false;
+    if(!tieneInformacionFarmacia(reg)) return false;
+    return true;
+  });
+
+  let totalActuales = 0, totalFaltantes = 0;
+  const porDiris = {};
+  Object.keys(DIRIS_LABELS).forEach(d => porDiris[d] = 0);
+  const porIpress = [];
+
+  registrosFiltrados.forEach(reg => {
+    const { actuales, faltantes } = calcularBrechaPorRegistro(reg);
+    totalActuales += actuales;
+    totalFaltantes += faltantes;
+    const item = disaPorRenipress[String(reg.RENIPRESS).trim()];
+    if(item && porDiris[item.disa] !== undefined){
+      porDiris[item.disa] += faltantes;
+    }
+    porIpress.push({ nombre: reg.IPRESS || item?.n || reg.RENIPRESS, actuales, faltantes });
+  });
+
+  // KPIs
+  const totalBrecha = totalActuales + totalFaltantes;
+  const pctBrecha = totalBrecha > 0 ? Math.round((totalFaltantes / totalBrecha) * 100) : 0;
+  document.getElementById('kpiBrecha').innerHTML = `
+    <div class="kpi-card-brecha"><div class="num">${registrosFiltrados.length}</div><div class="lbl">IPRESS con datos</div></div>
+    <div class="kpi-card-brecha"><div class="num">${totalActuales}</div><div class="lbl">PCs actuales</div></div>
+    <div class="kpi-card-brecha"><div class="num" style="color:var(--rojo-crit);">${totalFaltantes}</div><div class="lbl">PCs faltantes</div></div>
+    <div class="kpi-card-brecha"><div class="num">${pctBrecha}%</div><div class="lbl">% del total que falta</div></div>
+  `;
+
+  // Barras por DIRIS
+  const maxDiris = Math.max(...Object.values(porDiris), 1);
+  const htmlDiris = Object.keys(porDiris).sort((a,b) => porDiris[b] - porDiris[a]).map(diris => {
+    const val = porDiris[diris];
+    const pct = Math.round((val / maxDiris) * 100);
+    return `
+      <div class="barra-diris-brecha-fila">
+        <div class="label-diris-b">${DIRIS_LABELS[diris]}</div>
+        <div class="barra-bg-b"><div class="barra-fill-b" style="width:${pct}%; background:var(--rojo-crit);"><span class="valor-b">${val}</span></div></div>
+      </div>`;
+  }).join('');
+  document.getElementById('graficoBrechaDiris').innerHTML = htmlDiris;
+
+  // Top 8 IPRESS con mayor brecha
+  const top = [...porIpress].sort((a,b) => b.faltantes - a.faltantes).filter(i => i.faltantes > 0).slice(0, 8);
+  if(top.length === 0){
+    document.getElementById('graficoTopBrecha').innerHTML = '<div class="sin-resultados">Aún no hay farmacias con PCs faltantes registradas.</div>';
+    return;
+  }
+  const maxTop = Math.max(...top.map(i => i.faltantes), 1);
+  document.getElementById('graficoTopBrecha').innerHTML = top.map(i => {
+    const pct = Math.round((i.faltantes / maxTop) * 100);
+    const nombreCorto = i.nombre.length > 40 ? i.nombre.substring(0,38) + '…' : i.nombre;
+    return `
+      <div class="barra-top-brecha-fila">
+        <div class="nombre-tb">${nombreCorto}</div>
+        <div class="barra-bg-tb"><div class="barra-fill-tb" style="width:${pct}%;"><span class="valor-tb">${i.faltantes}</span></div></div>
+      </div>`;
+  }).join('');
+}
+
 function renderRankingBrechas(){
   const cont = document.getElementById('listaBrechas');
   const conteo = {};
   CRITERIOS_BRECHA.forEach(c => conteo[c.col] = { noCumple: 0, respondidas: 0 });
 
+  const categoriaActiva = document.getElementById('filtroCategoria').value;
+
   registrosCompletos.forEach(reg => {
+    if(categoriaActiva !== 'TODAS' && reg.CATEGORIA !== categoriaActiva) return;
     for(let n = 1; n <= 5; n++){
       const nombreFarmacia = reg['NOMBRE_FARMACIA_' + n];
       if(!nombreFarmacia) continue; // ese bloque de farmacia no fue usado
@@ -341,12 +524,14 @@ function renderRankingBrechas(){
 
 function obtenerPendientesFiltrados(){
   const filtroDiris = document.getElementById('filtroDiris').value;
+  const categoriaActiva = document.getElementById('filtroCategoria').value;
   const q = document.getElementById('buscarTabla').value.trim().toLowerCase();
 
   const pendientes = BASE_IPRESS.filter(item => {
     if(!DIRIS_LABELS[item.disa]) return false;
     if(renipressRegistrados.has(item.r)) return false;
     if(filtroDiris !== 'TODOS' && item.disa !== filtroDiris) return false;
+    if(categoriaActiva !== 'TODAS' && item.c !== categoriaActiva) return false;
     if(q){
       const texto = (item.r + ' ' + item.n + ' ' + item.dist).toLowerCase();
       if(!texto.includes(q)) return false;
@@ -408,8 +593,10 @@ function descargarExcel(){
   const libro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(libro, hoja, 'Pendientes');
 
+  const categoriaActiva = document.getElementById('filtroCategoria').value;
   const nombreArchivo = 'ipress_pendientes_' +
     (filtroDiris === 'TODOS' ? 'todas_diris' : filtroDiris.toLowerCase().replace(/\s+/g, '_')) +
+    (categoriaActiva !== 'TODAS' ? '_' + categoriaActiva.toLowerCase() : '') +
     '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
 
   XLSX.writeFile(libro, nombreArchivo);
