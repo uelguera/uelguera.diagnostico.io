@@ -138,8 +138,6 @@
   <!-- IDENTIFICACIÓN -->
   <div class="section">
     <h2>📍 Identificación del establecimiento</h2>
-    <label>Institución</label>
-    <input type="text" id="institucion" placeholder="Ej: MINSA, Gobierno Regional, EsSalud">
     <label>Código único <span class="hint">(escriba código o nombre del establecimiento)</span></label>
     <div class="autocomplete-wrap">
       <input type="text" id="buscarIpress" placeholder="Ej: 00004840 o SAN ISIDRO" autocomplete="off" oninput="buscarIPRESS(this.value)" onfocus="buscarIPRESS(this.value)">
@@ -158,13 +156,7 @@
       <div><label>Distrito</label><input type="text" id="distrito" readonly></div>
       <div><label>DIRIS</label><input type="text" id="disa" readonly></div>
     </div>
-    <div class="row">
-      <div><label>Red</label><input type="text" id="red" readonly></div>
-      <div><label>Microrred</label><input type="text" id="microrred" readonly></div>
-    </div>
-    <label>Unidad Ejecutora</label>
-    <input type="text" id="unidadEjecutora" readonly>
-    <label>Responsable del registro</label>
+    <label>Responsable de la Farmacia</label>
     <input type="text" id="responsable" placeholder="Nombre y apellido">
   </div>
 
@@ -257,9 +249,6 @@ function seleccionarIPRESS(codigo){
   document.getElementById('provincia').value = item.prov || '';
   document.getElementById('distrito').value = item.dist || '';
   document.getElementById('disa').value = item.disa || '';
-  document.getElementById('red').value = item.red || '';
-  document.getElementById('microrred').value = item.micro || '';
-  document.getElementById('unidadEjecutora').value = item.ue || '';
   document.getElementById('listaSugerencias').classList.remove('show');
 }
 
@@ -479,7 +468,6 @@ function actualizarResumenGeneral(){
 
 function construirPayload(){
   return {
-    INSTITUCION: document.getElementById('institucion').value,
     RENIPRESS: document.getElementById('reniIpress').value,
     IPRESS: document.getElementById('ipress').value,
     CATEGORIA: document.getElementById('categoria').value,
@@ -487,16 +475,13 @@ function construirPayload(){
     PROVINCIA: document.getElementById('provincia').value,
     DISTRITO: document.getElementById('distrito').value,
     DISA: document.getElementById('disa').value,
-    RED: document.getElementById('red').value,
-    MICRORRED: document.getElementById('microrred').value,
-    UNIDAD_EJECUTORA: document.getElementById('unidadEjecutora').value,
     RESPONSABLE: document.getElementById('responsable') ? document.getElementById('responsable').value : '',
     FARMACIAS: window._farmacias,
   };
 }
 
 // ⚠️ Reemplaza esta URL por la de tu implementación de Code_farmacia_v2.gs
-const API_URL = "https://script.google.com/macros/s/AKfycbx6PMw5JanyZdbk6UMtOyn4KQxW2CACFZbTYD_ptuEdJJ0NoMUVil9fPSQjTipYF6bvKg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby4nIfvGbGs48rsOOIucIwS3FtxyG4OKssd-TtcROaXgc4o07ToViJB2tpPngNYguDC2Q/exec";
 
 async function guardarRegistro(){
   const msg = document.getElementById('guardarMsg');
@@ -540,7 +525,6 @@ async function guardarRegistro(){
 
 function limpiarFormulario(){
   // Identificación
-  document.getElementById('institucion').value = '';
   document.getElementById('buscarIpress').value = '';
   document.getElementById('reniIpress').value = '';
   document.getElementById('ipress').value = '';
@@ -549,9 +533,6 @@ function limpiarFormulario(){
   document.getElementById('provincia').value = '';
   document.getElementById('distrito').value = '';
   document.getElementById('disa').value = '';
-  document.getElementById('red').value = '';
-  document.getElementById('microrred').value = '';
-  document.getElementById('unidadEjecutora').value = '';
   document.getElementById('responsable').value = '';
 
   // Farmacias
