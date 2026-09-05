@@ -197,6 +197,7 @@ const PREGUNTAS_SN = [
   { id: 'q_presupuesto', grupo: 'Gestión', texto: '¿Tiene presupuesto para nivelar al equipamiento mínimo?' },
 ];
 
+const OPCIONES_NOMBRE_FARMACIA = ['Farmacia Principal', 'Farmacia de Emergencia', 'Otro'];
 const OPCIONES_PROCESADOR = ['Intel Core i3', 'Intel Core i5', 'Intel Core i7 o superior', 'Intel Pentium / Celeron', 'AMD Ryzen', 'AMD (otro)', 'No lo sé', 'Otro'];
 const OPCIONES_CABLEADO = ['Menor a 6', '6', '6A', 'Superior'];
 const CABLEADO_CUMPLE = ['6', '6A', 'Superior']; // categorías que se consideran conformes
@@ -228,7 +229,7 @@ function buscarIPRESS(valor){
   } else {
     lista.innerHTML = resultados.map(item =>
       `<div class="autocomplete-item" onclick="seleccionarIPRESS('${item.r}')">
-        <span class="code">${item.r}</span>${item.n} <span style="color:var(--gris); font-size:11.5px;">(${item.c || 's/c'})</span><span class="region">${item.dep}</span>
+        <span class="code">${item.r}</span>${item.n} <span style="color:var(--gris); font-size:11.5px;">(${item.c || 's/c'})</span><span class="region">${item.dist}${item.disa ? ' (' + item.disa + ')' : ''}</span>
       </div>`
     ).join('');
     if(coincidencias.length > resultados.length){
@@ -286,6 +287,13 @@ function eliminarFarmacia(idx){
   window._farmacias.splice(idx, 1);
   render();
 }
+function actualizarTipoFarmacia(idx, valor){
+  // Al elegir un preset se usa directo como nombre; al elegir "Otro" se limpia
+  // para que el usuario escriba el nombre específico (ej: Almacén).
+  window._farmacias[idx].nombre = (valor === 'Otro') ? '' : valor;
+  render();
+}
+
 function actualizarCampo(idx, campo, valor){
   window._farmacias[idx][campo] = valor;
   if(campo === 'nombre'){
@@ -387,6 +395,9 @@ function render(){
         }
       });
 
+      const esNombrePreset = OPCIONES_NOMBRE_FARMACIA.slice(0, -1).includes(f.nombre);
+      const valorSelectNombre = f.nombre ? (esNombrePreset ? f.nombre : 'Otro') : '';
+
       return `
       <div class="farmacia-card" data-idx="${i}">
         <div class="farmacia-card-head">
@@ -396,7 +407,14 @@ function render(){
 
         <div class="subgrupo-titulo" style="margin-top:6px;">Datos generales</div>
         <div class="row">
-          <div><label>Nombre de la farmacia</label><input type="text" value="${f.nombre || ''}" placeholder="Ej: Principal, Secundaria" oninput="actualizarCampo(${i},'nombre',this.value)"></div>
+          <div>
+            <label>Nombre de la farmacia</label>
+            <select onchange="actualizarTipoFarmacia(${i}, this.value)">
+              <option value="" ${!f.nombre ? 'selected' : ''} disabled>Seleccione...</option>
+              ${OPCIONES_NOMBRE_FARMACIA.map(op => `<option value="${op}" ${(valorSelectNombre === op) ? 'selected' : ''}>${op}</option>`).join('')}
+            </select>
+            ${valorSelectNombre === 'Otro' ? `<input type="text" value="${esNombrePreset ? '' : (f.nombre || '')}" placeholder="Especifique el nombre (ej: Almacén)" oninput="actualizarCampo(${i},'nombre',this.value)" style="margin-top:6px;">` : ''}
+          </div>
           <div><label>Cantidad de computadoras (actual)</label><input type="number" min="0" value="${f.cantPCs || 0}" oninput="actualizarCampo(${i},'cantPCs',parseFloat(this.value)||0)"></div>
         </div>
         <div class="row">
