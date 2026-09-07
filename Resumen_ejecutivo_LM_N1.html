@@ -7,7 +7,7 @@
 <style>
   :root{
     --azul-inst:#0B3D5C; --azul-claro:#1B6E93; --verde-ok:#1E7A46; --rojo-crit:#B3261E;
-    --ambar:#B3401A; --morado:#6B4FA0; --gris:#6B7A82; --borde:#E1E6E8; --fondo:#f4f6f7;
+    --ambar:#B3401A; --mostaza:#C9962C; --morado:#6B4FA0; --gris:#6B7A82; --borde:#E1E6E8; --fondo:#f4f6f7;
   }
   *{box-sizing:border-box;}
   body{font-family:'Segoe UI',Arial,sans-serif; background:var(--fondo); margin:0; padding:0; color:#1a1a1a;}
@@ -51,13 +51,14 @@
   .callout .pct{font-size:24px; font-weight:800; color:var(--rojo-crit); display:inline;}
   .callout .txt{font-size:12px; color:#5a2020; display:inline; margin-left:6px;}
 
-  .brecha-fila{margin-bottom:14px;}
-  .brecha-fila .lbl{font-size:12px; font-weight:700; margin-bottom:4px;}
-  .brecha-doble{display:flex; align-items:center; gap:4px; height:14px;}
-  .brecha-doble .seg{height:100%; border-radius:2px;}
-  .brecha-doble .n{font-size:11px; font-weight:700; margin-left:4px;}
+  .brecha-grupo{margin-bottom:14px;}
+  .brecha-grupo .lbl-diris{font-size:12px; font-weight:800; margin-bottom:6px; color:#1a1a1a;}
+  .brecha-linea{display:flex; align-items:center; gap:8px; margin-bottom:4px;}
+  .brecha-linea .bg{flex:1; height:13px; background:#eef1f2; border-radius:3px; overflow:hidden;}
+  .brecha-linea .fill{height:100%; border-radius:3px;}
+  .brecha-linea .n{width:26px; text-align:right; font-size:11px; font-weight:700; flex:0 0 auto;}
 
-  .leyenda-doble{display:flex; gap:16px; font-size:11px; margin-top:6px;}
+  .leyenda-doble{display:flex; gap:16px; font-size:11px; margin-top:10px;}
   .leyenda-doble .item{display:flex; align-items:center; gap:5px;}
   .leyenda-doble .sq{width:9px; height:9px; border-radius:2px;}
 
@@ -126,18 +127,18 @@
       <h2>COMPOSICIÓN DE LAS IPRESS VISITADAS</h2>
       <p class="sub">Distribución por categoría — 110 de 433 IPRESS</p>
       <div class="dona-fila">
-        <svg width="120" height="120" viewBox="0 0 120 120">
+        <svg width="160" height="160" viewBox="0 0 160 160">
           <!-- Dona: I-3 42%, I-4 34%, I-2 24%, I-1 1% -->
-          <circle cx="60" cy="60" r="48" fill="none" stroke="#1E7A46" stroke-width="20"
-            stroke-dasharray="126.8 175.9" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
-          <circle cx="60" cy="60" r="48" fill="none" stroke="#1B6E93" stroke-width="20"
-            stroke-dasharray="102.6 200.1" stroke-dashoffset="-126.8" transform="rotate(-90 60 60)"/>
-          <circle cx="60" cy="60" r="48" fill="none" stroke="#B3401A" stroke-width="20"
-            stroke-dasharray="72.5 230.2" stroke-dashoffset="-229.4" transform="rotate(-90 60 60)"/>
-          <circle cx="60" cy="60" r="48" fill="none" stroke="#6B4FA0" stroke-width="20"
-            stroke-dasharray="3 299.7" stroke-dashoffset="-301.9" transform="rotate(-90 60 60)"/>
-          <text x="60" y="55" text-anchor="middle" font-size="20" font-weight="800" fill="#1a1a1a">110</text>
-          <text x="60" y="72" text-anchor="middle" font-size="9" fill="var(--gris)">de 433</text>
+          <circle cx="80" cy="80" r="64" fill="none" stroke="#1E7A46" stroke-width="26"
+            stroke-dasharray="169 234.5" stroke-dashoffset="0" transform="rotate(-90 80 80)"/>
+          <circle cx="80" cy="80" r="64" fill="none" stroke="#1B6E93" stroke-width="26"
+            stroke-dasharray="136.8 266.7" stroke-dashoffset="-169" transform="rotate(-90 80 80)"/>
+          <circle cx="80" cy="80" r="64" fill="none" stroke="#B3401A" stroke-width="26"
+            stroke-dasharray="96.7 306.8" stroke-dashoffset="-305.8" transform="rotate(-90 80 80)"/>
+          <circle cx="80" cy="80" r="64" fill="none" stroke="#6B4FA0" stroke-width="26"
+            stroke-dasharray="4 399.5" stroke-dashoffset="-402.5" transform="rotate(-90 80 80)"/>
+          <text x="80" y="75" text-anchor="middle" font-size="26" font-weight="800" fill="#1a1a1a">110</text>
+          <text x="80" y="95" text-anchor="middle" font-size="11" fill="var(--gris)">de 433</text>
         </svg>
         <div class="dona-leyenda">
           <div class="item"><span class="punto" style="background:#1B6E93;"></span>I-4: 37 <b>(34%)</b></div>
@@ -162,73 +163,65 @@
         <span class="pct">67%</span><span class="txt">de la brecha de PC faltantes se concentra en LIMA NORTE (61 de 91)</span>
       </div>
 
-      <div class="brecha-fila">
-        <div class="lbl">NORTE</div>
-        <div class="brecha-doble">
-          <div class="seg" style="width:61%; background:var(--rojo-crit);"></div><span class="n">61</span>
-          <div class="seg" style="width:9%; background:var(--ambar); margin-left:8px;"></div><span class="n">9</span>
-        </div>
+      <div class="brecha-grupo">
+        <div class="lbl-diris">NORTE</div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:100%; background:var(--rojo-crit);"></div></div><div class="n">61</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:15%; background:var(--mostaza);"></div></div><div class="n">9</div></div>
       </div>
-      <div class="brecha-fila">
-        <div class="lbl">SUR</div>
-        <div class="brecha-doble">
-          <div class="seg" style="width:28%; background:var(--rojo-crit);"></div><span class="n">28</span>
-          <div class="seg" style="width:20%; background:var(--ambar); margin-left:8px;"></div><span class="n">20</span>
-        </div>
+      <div class="brecha-grupo">
+        <div class="lbl-diris">SUR</div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:46%; background:var(--rojo-crit);"></div></div><div class="n">28</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:33%; background:var(--mostaza);"></div></div><div class="n">20</div></div>
       </div>
-      <div class="brecha-fila">
-        <div class="lbl">ESTE</div>
-        <div class="brecha-doble">
-          <div class="seg" style="width:1%; background:var(--rojo-crit);"></div><span class="n">0</span>
-          <div class="seg" style="width:15%; background:var(--ambar); margin-left:8px;"></div><span class="n">15</span>
-        </div>
+      <div class="brecha-grupo">
+        <div class="lbl-diris">ESTE</div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:0%; background:var(--rojo-crit);"></div></div><div class="n">0</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:25%; background:var(--mostaza);"></div></div><div class="n">15</div></div>
       </div>
-      <div class="brecha-fila">
-        <div class="lbl">CENTRO</div>
-        <div class="brecha-doble">
-          <div class="seg" style="width:2%; background:var(--rojo-crit);"></div><span class="n">2</span>
-          <div class="seg" style="width:1%; background:var(--ambar); margin-left:8px;"></div><span class="n">0</span>
-        </div>
+      <div class="brecha-grupo">
+        <div class="lbl-diris">CENTRO</div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:3%; background:var(--rojo-crit);"></div></div><div class="n">2</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:0%; background:var(--mostaza);"></div></div><div class="n">0</div></div>
       </div>
 
       <div class="leyenda-doble">
         <div class="item"><span class="sq" style="background:var(--rojo-crit);"></span>PC faltantes</div>
-        <div class="item"><span class="sq" style="background:var(--ambar);"></span>PC mal estado</div>
+        <div class="item"><span class="sq" style="background:var(--mostaza);"></span>PC mal estado</div>
       </div>
     </div>
 
     <div class="panel">
       <h2>CONECTIVIDAD HABILITANTE</h2>
-      <p class="sub">Porcentaje sobre las 113 farmacias evaluadas</p>
+      <p class="sub">Porcentaje sobre las 112 farmacias evaluadas</p>
 
       <div class="conn-fila">
-        <div class="top"><span>Cableado Cat. 6+</span><b style="color:var(--verde-ok);">96/113 (85%)</b></div>
+        <div class="top"><span>Enlace ≥10 Mbps</span><b style="color:var(--verde-ok);">112/112 (100%)</b></div>
+        <div class="conn-bg"><div class="conn-fill" style="width:100%; background:var(--verde-ok);"></div></div>
+      </div>
+      <div class="conn-fila">
+        <div class="top"><span>Red estable (continuidad)</span><b style="color:var(--verde-ok);">105/112 (94%)</b></div>
+        <div class="conn-bg"><div class="conn-fill" style="width:94%; background:var(--verde-ok);"></div></div>
+      </div>
+      <div class="conn-fila">
+        <div class="top"><span>Fibra óptica</span><b style="color:var(--verde-ok);">99/112 (88%)</b></div>
+        <div class="conn-bg"><div class="conn-fill" style="width:88%; background:var(--verde-ok);"></div></div>
+      </div>
+      <div class="conn-fila">
+        <div class="top"><span>Cableado Cat. 6+</span><b style="color:var(--verde-ok);">95/112 (85%)</b></div>
         <div class="conn-bg"><div class="conn-fill" style="width:85%; background:var(--verde-ok);"></div></div>
       </div>
       <div class="conn-fila">
-        <div class="top"><span>Enlace ≥10 Mbps</span><b style="color:var(--rojo-crit);">12/113 (11%)</b></div>
-        <div class="conn-bg"><div class="conn-fill" style="width:11%; background:var(--rojo-crit);"></div></div>
+        <div class="top"><span>Puertos suficientes</span><b style="color:var(--verde-ok);">93/112 (83%)</b></div>
+        <div class="conn-bg"><div class="conn-fill" style="width:83%; background:var(--verde-ok);"></div></div>
       </div>
       <div class="conn-fila">
-        <div class="top"><span>Puertos suficientes</span><b style="color:var(--rojo-crit);">12/113 (11%)</b></div>
-        <div class="conn-bg"><div class="conn-fill" style="width:11%; background:var(--rojo-crit);"></div></div>
-      </div>
-      <div class="conn-fila">
-        <div class="top"><span>Red estable (continuidad)</span><b style="color:var(--rojo-crit);">9/113 (8%)</b></div>
-        <div class="conn-bg"><div class="conn-fill" style="width:8%; background:var(--rojo-crit);"></div></div>
-      </div>
-      <div class="conn-fila">
-        <div class="top"><span>Fibra óptica</span><b style="color:var(--rojo-crit);">5/113 (4%)</b></div>
-        <div class="conn-bg"><div class="conn-fill" style="width:4%; background:var(--rojo-crit);"></div></div>
-      </div>
-      <div class="conn-fila">
-        <div class="top"><span>Wi-Fi estable</span><b style="color:var(--rojo-crit);">4/113 (4%)</b></div>
-        <div class="conn-bg"><div class="conn-fill" style="width:4%; background:var(--rojo-crit);"></div></div>
+        <div class="top"><span>Wi-Fi estable</span><b style="color:var(--rojo-crit);">18/112 (16%)</b></div>
+        <div class="conn-bg"><div class="conn-fill" style="width:16%; background:var(--rojo-crit);"></div></div>
       </div>
 
       <div class="alerta-box">
         <div class="tit">ALERTA PRINCIPAL</div>
-        <div class="txt">Solo 4 de 113 farmacias (4%) reportan Wi-Fi estable — el resto no lo tiene o no respondió esa pregunta.</div>
+        <div class="txt">El Wi-Fi estable es el único cuello de botella real de conectividad: solo 18 de 112 farmacias (16%) lo reporta, mientras el resto de indicadores supera el 83%.</div>
       </div>
     </div>
 
@@ -250,11 +243,11 @@
         </div>
         <div class="hallazgo">
           <div class="circ" style="background:var(--ambar);">3</div>
-          <div class="cont"><b>Conectividad</b><p>El cableado interno es sólido (85% con Cat. 6+), pero el enlace a internet y el Wi-Fi son el cuello de botella real: menos del 11% cumple en ambos.</p></div>
+          <div class="cont"><b>Conectividad</b><p>La conectividad de base es sólida (fibra 88%, enlace ≥10 Mbps 100%, red estable 94%), pero el Wi-Fi estable es el cuello de botella real: solo 16% (18 de 112) lo reporta.</p></div>
         </div>
         <div class="hallazgo">
           <div class="circ" style="background:var(--azul-claro);">4</div>
-          <div class="cont"><b>Financiamiento</b><p>De las farmacias que respondieron esta pregunta (18), el 100% indica no contar con presupuesto para nivelar el equipamiento mínimo.</p></div>
+          <div class="cont"><b>Financiamiento</b><p>De las 112 farmacias evaluadas, el 100% indica no contar con presupuesto para nivelar el equipamiento mínimo.</p></div>
         </div>
       </div>
     </div>
@@ -268,7 +261,7 @@
       </div>
       <div class="prioridad">
         <div class="num">02</div>
-        <div class="cont"><b>Habilitar operación digital</b><p>Adquirir 155 lectoras de firma y resolver conectividad (Wi-Fi/enlace) donde la operación lo requiere.</p></div>
+        <div class="cont"><b>Habilitar operación digital</b><p>Adquirir 155 lectoras de firma y resolver el Wi-Fi estable, único cuello de botella real de conectividad.</p></div>
       </div>
       <div class="prioridad">
         <div class="num">03</div>
@@ -284,7 +277,7 @@
   </div>
   <div class="nota-final">
     <div>Nota: Total de IPRESS a visitar en Lima Metropolitana: 433. Avance actual: 110 IPRESS (25%).</div>
-    <div>* Porcentajes de conectividad calculados sobre 113 farmacias individuales evaluadas (no sobre IPRESS).</div>
+    <div>* Porcentajes de conectividad calculados sobre 112 farmacias individuales evaluadas (no sobre IPRESS).</div>
   </div>
 
 </div>
