@@ -192,7 +192,7 @@ const PREGUNTAS_SN = [
   { id: 'q_10mbps', grupo: 'Conectividad', texto: '¿La conexión dedicada para el módulo de farmacia alcanza al menos 10 Mbps?' },
   { id: 'q_wifi', grupo: 'Conectividad', texto: '¿Existe red Wi-Fi estable para los equipos y dispositivos del sistema de farmacia?' },
   { id: 'q_filtrado', grupo: 'Conectividad', texto: '¿Se aplican mecanismos de filtrado y control de navegación para priorizar servicios institucionales?' },
-  { id: 'q_estabilidad', grupo: 'Conectividad', texto: '¿La red es estable y garantiza la continuidad de operación del sistema (SISMED, Pakamuros, Web Gaken o propio)?' },
+  { id: 'q_estabilidad', grupo: 'Conectividad', texto: '¿La red es estable y garantiza la continuidad de operación del sistema (SISMED, SIHCE, Pakamuros Soft, WebGalen o propio)?' },
   { id: 'q_puertos', grupo: 'Infraestructura', texto: '¿Hay suficientes puertos de red, equipos de comunicación y puntos de datos para todos los usuarios y dispositivos requeridos?' },
   { id: 'q_presupuesto', grupo: 'Gestión', texto: '¿Tiene presupuesto para nivelar al equipamiento mínimo?' },
 ];
@@ -267,7 +267,7 @@ function nuevaFarmacia(){
     nombre: '', nombreEsOtro: false, cantPCs: 0, cantPCsFaltantes: 0, cantPCsMalEstado: 0, antiguedadPC: '',
     cantPCsAlquiladas: 0, cantImpresoras: 0, cantTicketeras: 0,
     cantLectorasFirma: 0, cantLectorasFirmaNecesarias: 0,
-    procesador: '', cableado: '', conexionEstable: null, observaciones: '',
+    procesador: '', cableado: '', sistemaUtilizado: '', observaciones: '',
   };
   PREGUNTAS_SN.forEach(p => f[p.id] = null); // null = sin responder, true = Sí, false = No
   return f;
@@ -327,8 +327,9 @@ function actualizarPregunta(idx, qid, valor){
   render();
 }
 
-// Total de ítems evaluables: los Sí/No + cableado (categórico) + conexión estable (Estable/No Estable)
-const TOTAL_ITEMS_EVALUABLES = PREGUNTAS_SN.length + 2;
+// Total de ítems evaluables: los Sí/No + cableado (categórico)
+// Nota: "sistema utilizado" ya no es Sí/No, así que no se cuenta como ítem evaluable.
+const TOTAL_ITEMS_EVALUABLES = PREGUNTAS_SN.length + 1;
 
 function calcularCumplimiento(f){
   let positivas = 0;
@@ -344,11 +345,6 @@ function calcularCumplimiento(f){
   if(f.cableado){
     respondidas++;
     if(CABLEADO_CUMPLE.includes(f.cableado)) positivas++;
-  }
-
-  if(f.conexionEstable !== null){
-    respondidas++;
-    if(f.conexionEstable === true) positivas++;
   }
 
   return { positivas, total: TOTAL_ITEMS_EVALUABLES, respondidas };
@@ -408,31 +404,28 @@ function render(){
         </div>
 
         <div class="subgrupo-titulo" style="margin-top:6px;">Datos generales</div>
+
+        <label>Nombre de la farmacia</label>
+        <div class="pill-group">
+          ${OPCIONES_NOMBRE_FARMACIA.map(op => `<button type="button" class="pill-btn ${op === 'Otro' ? 'no' : 'si'} ${valorSelectNombre === op ? 'active' : ''}" onclick="actualizarTipoFarmacia(${i}, '${op}')">${op}</button>`).join('')}
+        </div>
+        ${valorSelectNombre === 'Otro' ? `<input type="text" value="${f.nombre || ''}" placeholder="Especifique el nombre (ej: Almacén)" oninput="actualizarCampo(${i},'nombre',this.value)" style="margin-top:6px; margin-bottom:14px;">` : ''}
+
         <div class="row">
-          <div>
-            <label>Nombre de la farmacia</label>
-            <select onchange="actualizarTipoFarmacia(${i}, this.value)">
-              <option value="" ${!f.nombre ? 'selected' : ''} disabled>Seleccione...</option>
-              ${OPCIONES_NOMBRE_FARMACIA.map(op => `<option value="${op}" ${(valorSelectNombre === op) ? 'selected' : ''}>${op}</option>`).join('')}
-            </select>
-            ${valorSelectNombre === 'Otro' ? `<input type="text" value="${f.nombre || ''}" placeholder="Especifique el nombre (ej: Almacén)" oninput="actualizarCampo(${i},'nombre',this.value)" style="margin-top:6px;">` : ''}
-          </div>
           <div><label>Cantidad de computadoras (actual)</label><input type="number" min="0" value="${f.cantPCs || 0}" oninput="actualizarCampo(${i},'cantPCs',parseFloat(this.value)||0)"></div>
-        </div>
-        <div class="row">
           <div><label>Cantidad de computadoras (faltante)</label><input type="number" min="0" value="${f.cantPCsFaltantes || 0}" oninput="actualizarCampo(${i},'cantPCsFaltantes',parseFloat(this.value)||0)"></div>
-          <div><label>Cantidad de computadoras en mal estado</label><input type="number" min="0" value="${f.cantPCsMalEstado || 0}" oninput="actualizarCampo(${i},'cantPCsMalEstado',parseFloat(this.value)||0)"></div>
         </div>
         <div class="row">
-          <div><label>Antigüedad de las PC</label>
-            <select onchange="actualizarCampo(${i},'antiguedadPC',this.value)">
-              <option value="" ${!f.antiguedadPC ? 'selected' : ''} disabled>Seleccione...</option>
-              ${OPCIONES_ANTIGUEDAD.map(op => `<option value="${op}" ${f.antiguedadPC === op ? 'selected' : ''}>${op}</option>`).join('')}
-            </select>
-          </div>
+          <div><label>Cantidad de computadoras en mal estado</label><input type="number" min="0" value="${f.cantPCsMalEstado || 0}" oninput="actualizarCampo(${i},'cantPCsMalEstado',parseFloat(this.value)||0)"></div>
           <div><label>Cantidad de computadoras alquiladas</label><input type="number" min="0" value="${f.cantPCsAlquiladas || 0}" oninput="actualizarCampo(${i},'cantPCsAlquiladas',parseFloat(this.value)||0)"></div>
         </div>
-        <div class="row">
+
+        <label>Antigüedad de las PC</label>
+        <div class="pill-group">
+          ${OPCIONES_ANTIGUEDAD.map(op => `<button type="button" class="pill-btn ${op === 'No lo sé' ? 'no' : 'si'} ${f.antiguedadPC === op ? 'active' : ''}" onclick="actualizarCampo(${i},'antiguedadPC','${op}')">${op}</button>`).join('')}
+        </div>
+
+        <div class="row" style="margin-top:14px;">
           <div><label>Cantidad de impresoras</label><input type="number" min="0" value="${f.cantImpresoras || 0}" oninput="actualizarCampo(${i},'cantImpresoras',parseFloat(this.value)||0)"></div>
           <div><label>Cantidad de ticketeras</label><input type="number" min="0" value="${f.cantTicketeras || 0}" oninput="actualizarCampo(${i},'cantTicketeras',parseFloat(this.value)||0)"></div>
         </div>
@@ -450,10 +443,11 @@ function render(){
 
         <div class="subgrupo-titulo">Sistema utilizado</div>
         <div class="pregunta-sn">
-          <label>¿Cuenta con conexión estable para operar en el SISMED o sistema propio?</label>
+          <label>¿Qué sistema utiliza actualmente para farmacia?</label>
           <div class="pill-group">
-            <button type="button" class="pill-btn si ${f.conexionEstable === true ? 'active' : ''}" onclick="actualizarCampo(${i},'conexionEstable',true)">Estable</button>
-            <button type="button" class="pill-btn no ${f.conexionEstable === false ? 'active' : ''}" onclick="actualizarCampo(${i},'conexionEstable',false)">No Estable</button>
+            <button type="button" class="pill-btn si ${f.sistemaUtilizado === 'SISMED' ? 'active' : ''}" onclick="actualizarCampo(${i},'sistemaUtilizado','SISMED')">SISMED</button>
+            <button type="button" class="pill-btn si ${f.sistemaUtilizado === 'Sistema propio' ? 'active' : ''}" onclick="actualizarCampo(${i},'sistemaUtilizado','Sistema propio')">Sistema propio</button>
+            <button type="button" class="pill-btn no ${f.sistemaUtilizado === 'Ninguno' ? 'active' : ''}" onclick="actualizarCampo(${i},'sistemaUtilizado','Ninguno')">Ninguno</button>
           </div>
         </div>
 
