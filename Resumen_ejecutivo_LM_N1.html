@@ -106,7 +106,7 @@
   <div class="header">
     <div>
       <h1>BRECHA TECNOLÓGICA EN FARMACIAS DE IPRESS — LIMA METROPOLITANA</h1>
-      <div class="sub">Situación actual y prioridades de cierre — Datos en vivo del sistema SETI-SIS</div>
+      <div class="sub">Diagnóstico de brecha tecnológica para habilitar la implementación de SISMED — Datos en vivo del sistema SETI-SIS</div>
     </div>
     <div class="badge">DASHBOARD FARMACIA NIVEL I</div>
   </div>
@@ -144,7 +144,7 @@
         <div class="item"><span class="sq" style="background:var(--rojo-crit);"></span>PC faltantes</div>
         <div class="item"><span class="sq" style="background:var(--mostaza);"></span>PC mal estado</div>
       </div>
-      <p class="sub" style="margin-top:8px;">Cada barra usa su propia escala (compara entre DIRIS dentro de la misma métrica, no entre métricas).</p>
+      <p class="sub" style="margin-top:8px;">Todas las barras usan la misma escala: el largo es directamente proporcional al valor en cualquier métrica o DIRIS.</p>
     </div>
 
     <div class="panel">
@@ -320,17 +320,17 @@ async function cargarYRenderizar(){
     document.getElementById('calloutBrecha').innerHTML = `<span class="pct">${pctConcentracion}%</span><span class="txt">de la brecha de PC faltantes se concentra en LIMA ${DIRIS_LABELS[dirisMayorFaltante].toUpperCase()} (${porDiris[dirisMayorFaltante].faltantes} de ${totalFaltantes})</span>`;
 
     // --- Brecha por DIRIS (3 barras paralelas, escala propia por métrica) ---
-    const maxPcs = Math.max(...Object.values(porDiris).map(d => d.pcs), 1);
-    const maxFalt = Math.max(...Object.values(porDiris).map(d => d.faltantes), 1);
-    const maxMal = Math.max(...Object.values(porDiris).map(d => d.malEstado), 1);
+    const maxCompartido = Math.max(
+      ...Object.values(porDiris).map(d => Math.max(d.pcs, d.faltantes, d.malEstado)), 1
+    );
     document.getElementById('brechaGrupos').innerHTML = dirisOrdenados.map(d => {
       const info = porDiris[d];
       return `
       <div class="brecha-grupo">
         <div class="lbl-diris">${DIRIS_LABELS[d].toUpperCase()}</div>
-        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:${Math.round(info.pcs/maxPcs*100)}%; background:var(--azul-claro);"></div></div><div class="n">${info.pcs}</div></div>
-        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:${Math.round(info.faltantes/maxFalt*100)}%; background:var(--rojo-crit);"></div></div><div class="n">${info.faltantes}</div></div>
-        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:${Math.round(info.malEstado/maxMal*100)}%; background:var(--mostaza);"></div></div><div class="n">${info.malEstado}</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:${Math.round(info.pcs/maxCompartido*100)}%; background:var(--azul-claro);"></div></div><div class="n">${info.pcs}</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:${Math.round(info.faltantes/maxCompartido*100)}%; background:var(--rojo-crit);"></div></div><div class="n">${info.faltantes}</div></div>
+        <div class="brecha-linea"><div class="bg"><div class="fill" style="width:${Math.round(info.malEstado/maxCompartido*100)}%; background:var(--mostaza);"></div></div><div class="n">${info.malEstado}</div></div>
       </div>`;
     }).join('');
 
